@@ -39,7 +39,7 @@ variable.
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `src/lobby/`           | the single-screen AI Lab home: workbench photo, hardware specs, and all 5 services with On or Off health checks    |
 | `src/apps/shared/`     | `AppShell`, the frame every project screen sits in (sidebar, top bar, white sheet), and its stylesheet             |
-| `src/apps/pilah/`      | the configurable Dispatch System 1 router: custom prompt, custom choices, Laya active and Jev coming soon          |
+| `src/apps/pilah/`      | the configurable Dispatch System 1 router: custom prompt, custom choices, local Laya or hosted Jev per request     |
 | `src/apps/gatekeeper/` | the Gatekeeper console: totals, where requests went, a request to try, the live log                                |
 | `src/apps/lens/`       | the Lens semantic search and ingestion screen: Typesense vector search, user image upload to DB, visual neighbours |
 | `src/apps/ledger/`     | the Ledger book: supplier invoices with deterministic arithmetic checks, page view, bank statement reconciliation  |

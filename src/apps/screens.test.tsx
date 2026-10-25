@@ -26,7 +26,7 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-test("Pilah sorts paragraphs with custom prompt and choices on Laya and marks Jev as coming soon", async () => {
+test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on Jev", async () => {
   const sortCalls: Array<{
     engine: string;
     instructions: string;
@@ -55,10 +55,10 @@ test("Pilah sorts paragraphs with custom prompt and choices on Laya and marks Je
             {
               id: "jev",
               name: "Jev",
-              provider: "ConvAI Innovations API",
-              available: false,
-              status_label: "Coming soon",
-              detail: "Add JEV_API_KEY in secrets.env to enable Jev.",
+              provider: "TypeSafe AI (hosted System One API)",
+              available: true,
+              status_label: "Active",
+              detail: "jev-latest through api.typesafe.ai.",
             },
           ],
         });
@@ -82,14 +82,14 @@ test("Pilah sorts paragraphs with custom prompt and choices on Laya and marks Je
           ]),
         );
         return jsonResponse({
-          engine: "laya",
+          engine: parsed.engine,
           latency_ms: 19.4,
           confidence_gate: parsed.confidence_gate,
           results: parsed.items.map(() => ({
             choice: chosen,
             probabilities,
             top_probability: 0.84,
-            checkpoint: "english",
+            checkpoint: parsed.engine === "jev" ? "jev-1.14.0" : "english",
             passed_gate: 0.84 >= parsed.confidence_gate,
           })),
         });
@@ -106,8 +106,8 @@ test("Pilah sorts paragraphs with custom prompt and choices on Laya and marks Je
   expect(screen.getByLabelText("Sample input")).toBeInTheDocument();
   expect(screen.getByText("Below 0.70 means low confidence and needs a human judge.")).toBeInTheDocument();
 
-  const jevButton = await screen.findByRole("button", { name: /Jev · Coming soon/ });
-  expect(jevButton).toBeDisabled();
+  const jevButton = await screen.findByRole("button", { name: "Jev" });
+  expect(jevButton).toBeEnabled();
 
   const predictionPanel = await screen.findByRole("region", { name: "Model prediction" });
   expect(await within(predictionPanel).findByText("0.84")).toBeInTheDocument();
@@ -130,6 +130,14 @@ test("Pilah sorts paragraphs with custom prompt and choices on Laya and marks Je
   expect(latest?.items).toEqual(["Cleaned dust filters on the open GPU rig."]);
   const matches = await within(predictionPanel).findAllByText(/Hardware lab maintenance/);
   expect(matches.length).toBeGreaterThanOrEqual(1);
+  expect(latest?.engine).toBe("laya");
+
+  await userEvent.click(jevButton);
+  await userEvent.click(screen.getByRole("button", { name: "Sort with Jev" }));
+  await vi.waitFor(() => {
+    expect(sortCalls[sortCalls.length - 1]?.engine).toBe("jev");
+  });
+  expect(await within(predictionPanel).findByText("jev-1.14.0")).toBeInTheDocument();
 });
 
 test("Lens runs semantic Typesense search and indexes uploaded user pictures into the database", async () => {

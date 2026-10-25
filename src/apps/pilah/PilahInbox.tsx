@@ -40,10 +40,10 @@ const DEFAULT_ENGINES: EngineOption[] = [
   {
     id: "jev",
     name: "Jev",
-    provider: "TypeSafe AI (System One API)",
+    provider: "TypeSafe AI (hosted System One API)",
     available: false,
-    status_label: "Coming soon",
-    detail: "Coming soon. Add JEV_API_KEY in secrets.env when ready.",
+    status_label: "Needs key",
+    detail: "Add JEV_API_KEY to the secrets file to enable Jev.",
   },
 ];
 
@@ -256,6 +256,7 @@ export function PilahInbox() {
   });
   const engines = enginesQuery.data?.engines ?? DEFAULT_ENGINES;
   const activePreset = PRESETS.find((preset) => preset.id === presetId) ?? DEFAULT_PRESET;
+  const selectedEngineName = engines.find((engineOption) => engineOption.id === selectedEngine)?.name ?? "Laya";
 
   const sortItems = useCallback(
     async (
@@ -411,7 +412,7 @@ export function PilahInbox() {
   const subtitle = error
     ? error
     : activeRun
-      ? `Last prediction: ${activeRun.result.choice} (${probability(activeRun.result.top_probability)}) in ${Math.round(activeRun.latencyMs)} ms via ${activeRun.result.checkpoint} checkpoint.`
+      ? `Last prediction: ${activeRun.result.choice} (${probability(activeRun.result.top_probability)}) in ${Math.round(activeRun.latencyMs)} ms via ${activeRun.engine} (${activeRun.result.checkpoint}).`
       : "Write your own prompt and choices, then sort any paragraph with a calibrated System 1 model.";
 
   return (
@@ -581,7 +582,7 @@ export function PilahInbox() {
 
             <div className="pilah-actions">
               <button type="submit" className="btn primary" disabled={sorting}>
-                {sorting ? "Sorting..." : "Sort with Laya"}
+                {sorting ? "Sorting..." : `Sort with ${selectedEngineName}`}
               </button>
               <button type="button" className="btn" disabled={sorting} onClick={handleRunSamples}>
                 Sort {activePreset.samples.length} samples

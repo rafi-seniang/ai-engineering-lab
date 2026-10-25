@@ -5,7 +5,7 @@
     "port": 8010,
     "status": "built",
     "group": "Language",
-    "engine": "Laya System 1",
+    "engine": "Laya + Jev System 1",
     "route": "/dispatch",
     "summary": "Routes any paragraph into custom choices configured by prompt, with calibrated probabilities.",
     "picture": "pilah-sorting-mail-1910",
