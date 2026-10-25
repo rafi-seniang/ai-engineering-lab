@@ -1,0 +1,332 @@
+/* Ledger's screen, inside the shared app shell: the totals, the invoices or the statement, the selected invoice */
+
+.ledger-kpis {
+  margin-bottom: var(--gap);
+}
+.ledger-failure {
+  margin-bottom: 16px;
+  color: var(--negative);
+}
+.ledger-upload,
+.ledger-table > header .btn {
+  flex: none;
+  white-space: nowrap;
+}
+.ledger-upload.is-busy {
+  opacity: 0.7;
+  cursor: progress;
+}
+.ledger-upload:focus-within,
+.ledger-table header .btn:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* the views as tabs: the shell's tab look on buttons */
+.ledger-tabs button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--t-hover) ease;
+}
+.ledger-tabs button[aria-selected="true"] {
+  color: var(--text);
+}
+.ledger-tabs button[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--text);
+}
+.ledger-tab-count {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the list and the selected invoice side by side */
+.ledger-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+.show-detail .ledger-layout {
+  grid-template-columns: minmax(0, 1fr) 420px;
+}
+
+/* tables: quiet header, a rule between rows, numbers right-aligned in tabular figures */
+.ledger-table {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  overflow-x: auto;
+}
+.ledger-table > header {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 12px 0 8px;
+}
+.ledger-table table,
+.ledger-lines {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ledger-table th,
+.ledger-table td {
+  height: 44px;
+  padding: 0 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+.ledger-table th:first-child,
+.ledger-table td:first-child {
+  padding-left: 8px;
+}
+.ledger-table th {
+  height: 36px;
+  color: var(--muted);
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+}
+.ledger-table tbody tr + tr td {
+  border-top: 1px solid var(--rule);
+}
+.ledger-table tr.is-selected td {
+  background: var(--active);
+}
+.ledger-table .n,
+.ledger-lines .n {
+  text-align: right;
+}
+.ledger-table .truncate {
+  display: block;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ledger-subline {
+  display: none;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+.ledger-row-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  text-underline-offset: 3px;
+}
+.ledger-row-button:hover {
+  text-decoration: underline;
+}
+.ledger-clear {
+  color: var(--muted);
+}
+
+/* the selected invoice: its page, its checks, what was read, how it was paid */
+.ledger-detail {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 20px;
+}
+.ledger-detail > header {
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+.ledger-detail h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+.ledger-page {
+  display: block;
+  max-height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.ledger-page img {
+  width: 100%;
+}
+.ledger-checks {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ledger-checks li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.ledger-checks small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+}
+.ledger-check-mark {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--positive);
+}
+.is-fail .ledger-check-mark {
+  background: var(--negative);
+}
+.is-fail {
+  font-weight: 500;
+}
+.is-pass {
+  color: var(--muted);
+}
+.ledger-lines th,
+.ledger-lines td {
+  padding: 6px 0 6px 8px;
+  text-align: left;
+  font-size: var(--fs-small);
+}
+.ledger-lines th:first-child,
+.ledger-lines td:first-child {
+  padding-left: 0;
+}
+.ledger-lines th {
+  color: var(--muted);
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+}
+.ledger-lines .num {
+  white-space: nowrap;
+}
+.ledger-payments {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ledger-payments li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--fs-small);
+}
+.ledger-payments b {
+  font-weight: 500;
+}
+
+/* When the detail pane sits beside the table, fold secondary columns into the row subline so Payment never clips */
+.show-detail .ledger-table .col-wide {
+  display: none;
+}
+.show-detail .ledger-subline {
+  display: block;
+}
+.show-detail .ledger-table td {
+  height: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+@media (max-width: 1100px) {
+  .show-detail .ledger-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .show-detail .title-row {
+    margin-bottom: 12px;
+  }
+  .show-detail .title-row .sub,
+  .show-detail .title-actions,
+  .show-detail .ledger-kpis,
+  .show-detail .ledger-tabs,
+  .show-detail .ledger-table {
+    display: none;
+  }
+  .ledger-detail {
+    position: static;
+  }
+  .ledger-table .col-wide {
+    display: none;
+  }
+  .ledger-subline {
+    display: block;
+  }
+  .ledger-table td {
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ledger-kpis .kpi-value {
+    font-size: 20px;
+    white-space: nowrap;
+  }
+  .ledger-table thead {
+    display: none;
+  }
+  .ledger-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px 8px;
+    align-items: baseline;
+    padding: 12px 0;
+  }
+  .ledger-table tbody tr + tr {
+    border-top: 1px solid var(--rule);
+  }
+  .ledger-table tbody tr + tr td {
+    border-top: 0;
+  }
+  .ledger-table td {
+    padding: 0;
+  }
+  .ledger-table .cell-primary {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    min-width: 0;
+  }
+  .ledger-table .ledger-row-button,
+  .ledger-table .truncate {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ledger-table .cell-amount {
+    grid-column: 2 / 4;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .ledger-invoices-table .cell-checks {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+  .ledger-invoices-table .cell-payment,
+  .ledger-statement-table .cell-payment {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+}

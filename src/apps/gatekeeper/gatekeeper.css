@@ -1,0 +1,211 @@
+/* Gatekeeper's console, inside the shared app shell: totals and the route split, the request console, the log */
+
+.gate-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--gap);
+  align-items: start;
+}
+.gate-kpis {
+  margin-bottom: var(--gap);
+}
+.gate-facts {
+  margin-top: 20px;
+}
+.gate-facts dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gate-events {
+  grid-column: 1 / -1;
+  padding-bottom: 8px;
+}
+
+/* the route split: one bar, the accent for the small model, the muted chart grey for the strong one */
+.route-split-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.route-split-head span {
+  flex: none;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.route-bar {
+  height: 12px;
+  border-radius: 3px;
+  background: var(--chart-muted);
+  overflow: hidden;
+}
+.route-bar i {
+  display: block;
+  height: 100%;
+  background: var(--chart-1);
+  transition: width var(--t-ui) var(--ease-out);
+}
+.route-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.route-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.dot.small {
+  background: var(--chart-1);
+}
+.dot.strong {
+  background: var(--chart-muted);
+}
+
+/* the console */
+.gate-console h2 {
+  margin-bottom: 12px;
+}
+.gate-console textarea {
+  display: block;
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  resize: vertical;
+  line-height: 20px;
+}
+.gate-console textarea::placeholder {
+  color: var(--faint);
+}
+/* sample requests: a list of quiet text buttons, each starting on the textarea's left edge */
+.gate-samples {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin: 8px 0 12px -8px;
+}
+.gate-samples .btn {
+  height: auto;
+  min-height: 28px;
+  padding: 4px 8px;
+  text-align: left;
+  line-height: 20px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.gate-samples .btn:hover {
+  color: var(--text);
+}
+.gate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.gate-actions .btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.gate-result {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.gate-decision {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 12px;
+}
+.gate-decision dt {
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+.gate-decision dd {
+  margin-top: 2px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.gate-decision dd.is-bad,
+.gate-refused,
+.gate-failure {
+  color: var(--negative);
+}
+.gate-failure {
+  margin-top: 12px;
+}
+.gate-answer {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  white-space: pre-wrap;
+}
+
+/* the log */
+.gate-events table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.gate-events th,
+.gate-events td {
+  height: 44px;
+  padding: 0 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+.gate-events th:first-child,
+.gate-events td:first-child {
+  padding-left: 0;
+}
+.gate-events th {
+  height: 36px;
+  color: var(--muted);
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+}
+.gate-events th:first-child {
+  width: 34%;
+}
+.gate-events tbody tr + tr td {
+  border-top: 1px solid var(--rule);
+}
+.gate-events .n {
+  text-align: right;
+}
+.gate-events .truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .gate-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (max-width: 1100px) {
+  .gate-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gate-events {
+    overflow-x: auto;
+  }
+  .gate-events table {
+    min-width: 760px;
+  }
+}

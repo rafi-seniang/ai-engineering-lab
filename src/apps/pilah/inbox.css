@@ -1,0 +1,369 @@
+/* Pilah configurable System 1 model screen, inside the shared app shell (shared/app-shell.css). */
+
+.pilah-engines {
+  margin: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.pilah-workbench {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: var(--gap);
+  align-items: start;
+}
+
+.pilah-rule {
+  display: grid;
+  gap: 16px;
+}
+
+.pilah-rule > header,
+.pilah-test > header,
+.pilah-history > header {
+  margin-bottom: 0;
+}
+
+.pilah-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.pilah-select {
+  height: 32px;
+  padding: 0 10px;
+  font-size: var(--fs-body);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.pilah-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  resize: vertical;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.45;
+}
+
+.pilah-textarea::placeholder {
+  color: var(--faint);
+}
+
+.pilah-choices-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pilah-label {
+  font-weight: 500;
+}
+
+.pilah-choices-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pilah-choice-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.pilah-choice-code {
+  font-weight: 600;
+}
+
+.pilah-choice-desc {
+  min-width: 0;
+}
+
+.pilah-choice-remove {
+  color: var(--muted);
+  height: 38px;
+  padding: 0 8px;
+}
+
+.pilah-choice-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pilah-gate-field {
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.pilah-gate-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pilah-gate-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---------- right column: test form, calibrated bars, and session runs ---------- */
+.pilah-right {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.pilah-test {
+  display: grid;
+  gap: 12px;
+}
+
+.pilah-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pilah-error {
+  color: var(--negative);
+  font-size: var(--fs-small);
+}
+
+/* ---------- calibrated probability bars ---------- */
+.well.pilah-prediction {
+  display: grid;
+  gap: 16px;
+  padding: var(--card-pad);
+  border-radius: var(--radius-card);
+  background: var(--raised);
+  border: 1px solid var(--border);
+}
+
+.pilah-verdict-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pilah-verdict-head h3 {
+  font-size: var(--fs-section);
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.pilah-quote {
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.bars {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+.bar-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.bars .name {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.bars .criteria {
+  color: var(--faint);
+  font-size: var(--fs-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bars .value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--muted);
+}
+
+.bars .chosen .name,
+.bars .chosen .value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.track {
+  position: relative;
+  grid-column: 1 / -1;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+  background: var(--chart-muted);
+}
+
+.chosen .track i {
+  background: var(--accent);
+}
+
+.track b {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 1.5px;
+  background: var(--text);
+}
+
+.pilah-run-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.pilah-run-meta div {
+  display: grid;
+  gap: 2px;
+}
+
+.pilah-run-meta dt {
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.pilah-run-meta dd {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- session history ---------- */
+.pilah-history {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pilah-run-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.pilah-run-list li {
+  min-width: 0;
+}
+
+.pilah-run-list li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.pilah-run-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.pilah-run-row:hover {
+  background: var(--raised);
+}
+
+.pilah-run-row[aria-current="true"] {
+  background: var(--active);
+}
+
+.pilah-run-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pilah-run-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.pilah-run-time {
+  font-size: var(--fs-small);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .pilah-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .pilah-rule > header,
+  .pilah-test > header {
+    flex-wrap: wrap;
+  }
+  .pilah-choice-row {
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+  .pilah-choice-remove {
+    grid-column: 1 / -1;
+    justify-self: end;
+    height: 30px;
+  }
+  .pilah-run-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pilah-run-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

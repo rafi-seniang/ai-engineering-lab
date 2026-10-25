@@ -1,0 +1,62 @@
+[
+  {
+    "id": "pilah",
+    "name": "Dispatch",
+    "port": 8010,
+    "status": "built",
+    "group": "Language",
+    "engine": "Laya System 1",
+    "route": "/dispatch",
+    "summary": "Routes any paragraph into custom choices configured by prompt, with calibrated probabilities.",
+    "picture": "pilah-sorting-mail-1910",
+    "caption": "Configurable System 1 decision router"
+  },
+  {
+    "id": "gatekeeper",
+    "name": "Gatekeeper",
+    "port": 8020,
+    "status": "built",
+    "group": "Language",
+    "engine": "DeBERTa + DeepSeek",
+    "route": "/gatekeeper",
+    "summary": "Checks every LLM request: blocks prompt injection, masks identifiers, routes easy prompts to a small model.",
+    "picture": "gatekeeper-toll-gate-1900",
+    "caption": "OpenAI-compatible LLM security gateway"
+  },
+  {
+    "id": "lens",
+    "name": "Lens",
+    "port": 8030,
+    "status": "built",
+    "group": "Search and vision",
+    "engine": "EmbeddingGemma 2 + Typesense",
+    "route": "/lens",
+    "summary": "Finds pictures from English or Indonesian text or an image, plus custom picture indexing in Typesense.",
+    "picture": "lens-card-catalogue",
+    "caption": "Multimodal vector search in Typesense"
+  },
+  {
+    "id": "ledger",
+    "name": "Ledger",
+    "port": 8040,
+    "status": "built",
+    "group": "Documents",
+    "engine": "DeepSeek Vision",
+    "route": "/ledger",
+    "summary": "Reads supplier invoices with a vision model, verifies every sum in code, matches bank debits.",
+    "picture": "ledger-account-book-1766",
+    "caption": "Invoice extraction and bank reconciliation"
+  },
+  {
+    "id": "footfall",
+    "name": "Footfall",
+    "port": 8050,
+    "status": "planned",
+    "group": "Search and vision",
+    "engine": "RT-DETR v2 + ByteTrack",
+    "route": "/footfall",
+    "summary": "Counts people crossing a camera line and times how long they wait, with every head blurred.",
+    "picture": "footfall-grand-central-crowd-1953",
+    "caption": "Camera line counting and dwell timing"
+  }
+]

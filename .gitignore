@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.taste-skill/
+CLAUDE.md
+AGENTS.md
+.claude/
+.agents/
+public/media/footfall-*
+src/apps/footfall/
+src/api/footfall.ts
+src/api/generated/footfall.ts
