@@ -51,6 +51,6 @@ variable.
 ## Design
 
 The lobby fits on one `1440x900` screen on a stone ground (`#f2f2f0`) with the lab workbench photo on the left and all
-five services on the right. Services whose `/health` endpoint answers show `On` and open on click. Services whose
+six services on the right. Services whose `/health` endpoint answers show `On` and open on click. Services whose
 backend is stopped (such as Footfall on `:8050` when paused) stay visible as `Off` and cannot be clicked. Project
 screens use the framed-sheet app style (`inspect.mjs --app`: 0 FAIL, 0 WARN across 1440px, 768px and 390px).

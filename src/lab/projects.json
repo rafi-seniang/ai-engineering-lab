@@ -48,6 +48,18 @@
     "caption": "Invoice extraction and bank reconciliation"
   },
   {
+    "id": "tiketa",
+    "name": "Tiketa",
+    "port": 8060,
+    "status": "built",
+    "group": "Language",
+    "engine": "DeepSeek V4 Flash + LangGraph",
+    "route": "/tiketa",
+    "summary": "Books cinema seats two ways on one seat map: a chat agent that understands Indonesian, or a form by hand.",
+    "picture": "tiketa-cinema-batavia-1930s",
+    "caption": "Cinema booking agent beside a booking form"
+  },
+  {
     "id": "footfall",
     "name": "Footfall",
     "port": 8050,
