@@ -34,6 +34,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/auth/guest": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start Guest Session
+     * @description Sets a signed guest session cookie, or keeps the one the browser already has while it is valid.
+     */
+    post: operations["start_guest_session_auth_guest_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/sessions": {
     parameters: {
       query?: never;
@@ -226,8 +246,11 @@ export interface components {
        */
       created_at: string;
     };
-    /** BookingIn */
-    BookingIn: {
+    /**
+     * BookingForm
+     * @description What the booking form sends. The owner and channel come from the server.
+     */
+    BookingForm: {
       /** Showtime Id */
       showtime_id: number;
       /** Seats */
@@ -474,6 +497,24 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["ServiceMeta"];
         };
+      };
+    };
+  };
+  start_guest_session_auth_guest_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -732,7 +773,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["BookingIn"];
+        "application/json": components["schemas"]["BookingForm"];
       };
     };
     responses: {
