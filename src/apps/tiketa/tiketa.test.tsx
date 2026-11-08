@@ -67,6 +67,7 @@ interface Sent {
   path: string;
   body: unknown;
   headers: Headers;
+  credentials: RequestCredentials;
 }
 
 function serve(handle: (call: Sent) => Response | undefined) {
@@ -81,8 +82,10 @@ function serve(handle: (call: Sent) => Response | undefined) {
         path: new URL(request.url).pathname,
         body: text ? JSON.parse(text) : undefined,
         headers: request.headers,
+        credentials: request.credentials,
       };
       sent.push(call);
+      if (call.path === "/auth/guest") return new Response(null, { status: 204 });
       if (call.path === "/v1/movies") return json([MOVIE]);
       if (call.path === "/v1/showtimes") return json([SHOWTIME]);
       if (call.path === "/v1/usage") return json({ used_tokens: 0, daily_tokens: 400000, resets_in_seconds: 3600 });
@@ -138,6 +141,8 @@ test("the form books the chosen seats once, with an idempotency key", async () =
   const post = sent.find((call) => call.path === "/v1/bookings" && call.method === "POST");
   expect(post?.body).toEqual({ showtime_id: 117, seats: ["A1", "A2"], customer_name: "Rafi" });
   expect(post?.headers.get("idempotency-key")).toMatch(/^[0-9a-f-]{36}$/);
+  expect(sent[0]?.path).toBe("/auth/guest"); // the cookie comes before any call that needs it
+  expect(sent.filter((call) => call.path.startsWith("/v1")).every((call) => call.credentials === "include")).toBe(true);
   const table = await screen.findByRole("table");
   expect(await within(table).findByText("Form")).toBeInTheDocument();
 });

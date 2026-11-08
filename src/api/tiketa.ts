@@ -4,8 +4,41 @@ import type { components, paths } from "./generated/tiketa";
 
 const baseUrl = backendUrl(projectById("tiketa"));
 
+let guestSession: Promise<void> | null = null;
+
+/**
+ * The browser's guest session: a signed HttpOnly cookie the backend sets, which scripts here never see. It stands in
+ * for an API key, which a browser must never hold. Started once, and again if the backend no longer accepts it.
+ */
+function ensureGuest(): Promise<void> {
+  guestSession ??= globalThis
+    .fetch(`${baseUrl}/auth/guest`, { method: "POST", credentials: "include" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Tiketa refused a guest session (${response.status})`);
+    })
+    .catch((error: unknown) => {
+      guestSession = null; // the next request tries again
+      throw error;
+    });
+  return guestSession;
+}
+
+/** Sends a request with the guest cookie, starting the session first and once more if it has expired. */
+async function withGuest(send: () => Promise<Response>): Promise<Response> {
+  await ensureGuest();
+  const response = await send();
+  if (response.status !== 401) return response;
+  guestSession = null;
+  await ensureGuest();
+  return send();
+}
+
 /** Typed client for the Tiketa backend. Paths, bodies and responses come from its OpenAPI schema. */
-export const tiketa = createClient<paths>({ baseUrl, fetch: (request) => globalThis.fetch(request) });
+export const tiketa = createClient<paths>({
+  baseUrl,
+  credentials: "include",
+  fetch: (request) => withGuest(() => globalThis.fetch(request.clone())),
+});
 
 export type Movie = components["schemas"]["Movie"];
 export type Showtime = components["schemas"]["Showtime"];
@@ -54,12 +87,15 @@ export async function streamTurn(
   onEvent: (event: ChatEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const response = await globalThis.fetch(`${baseUrl}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify(body),
-    signal,
-  });
+  const response = await withGuest(() =>
+    globalThis.fetch(`${baseUrl}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify(body),
+      credentials: "include",
+      signal,
+    }),
+  );
   if (!response.ok || !response.body) {
     const error = await response.json().catch(() => undefined);
     throw new TiketaError(detailOf(error, response.status), response.status);
