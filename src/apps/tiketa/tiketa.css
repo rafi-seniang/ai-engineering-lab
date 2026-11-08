@@ -1,0 +1,886 @@
+/* Tiketa inside the shared app shell. Achromatic ledger: the chrome is ink and grey, and the one data hue (the
+   Lab's teal) marks the seats that are yours. Everything else on the map is a step of grey.
+
+   Grid at 1440: sheet content 1154px = form 770 + gap 24 + chat 360. The seat map sizes its seats from its own
+   width (container query), so the room always fits its panel without scrolling sideways. */
+
+.tiketa .num,
+.tiketa .tk-seat,
+.tiketa .tk-time,
+.tiketa .tk-days button {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.tiketa {
+  --chat-width: 360px;
+  --seat-free: var(--surface);
+  --seat-taken: #d5dadc;
+  --seat-mine: var(--accent);
+  --code: var(--mono);
+}
+
+.tk-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--chat-width);
+  grid-template-areas:
+    "title chat"
+    "form chat";
+  grid-template-rows: auto 1fr;
+  column-gap: var(--gap);
+  align-items: start;
+}
+.tk-layout > .title-row {
+  grid-area: title;
+}
+.tk-switch {
+  display: none;
+}
+.tk-form {
+  grid-area: form;
+  display: grid;
+  gap: var(--gap);
+  min-width: 0;
+}
+.tk-form h2 {
+  font-size: var(--fs-section);
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+/* ---------- films ---------- */
+.tk-films {
+  display: grid;
+  gap: 12px;
+}
+.tk-films-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tk-films {
+  position: relative;
+}
+.tk-rail-nav {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+.tk-rail-nav span {
+  margin-right: 8px;
+}
+.tk-rail-turn {
+  width: 32px;
+  padding: 0;
+}
+.tk-rail-turn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.tk-film-rail {
+  display: grid;
+  gap: 12px;
+  padding: 2px;
+}
+.tk-film-rail-loading {
+  height: 172px;
+  border-radius: 4px;
+  background: var(--raised);
+}
+.tk-film {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.tk-poster {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--raised);
+  transition:
+    outline-color var(--t-hover) ease,
+    transform var(--t-press) var(--ease-out);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.tk-poster-type {
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
+}
+.tk-film:hover .tk-poster {
+  outline-color: var(--control);
+}
+.tk-film:active .tk-poster {
+  transform: scale(0.98);
+}
+.tk-film[aria-pressed="true"] .tk-poster {
+  outline-color: var(--text);
+}
+.tk-film-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 17px;
+  font-weight: 500;
+}
+.tk-film[aria-pressed="true"] .tk-film-title {
+  font-weight: 600;
+}
+.tk-film-meta {
+  overflow: hidden;
+  font-size: var(--fs-small);
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- day and time ---------- */
+.tk-when {
+  display: grid;
+  gap: 12px;
+}
+.tk-when-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.tk-days {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tk-days button {
+  display: grid;
+  gap: 0;
+  min-width: 64px;
+  padding: 6px 10px;
+  line-height: 18px;
+}
+.tk-days button span:last-child {
+  font-size: var(--fs-small);
+}
+.tk-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tk-time {
+  display: grid;
+  gap: 2px;
+  min-width: 132px;
+  padding: 8px 12px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--t-hover) ease,
+    background-color var(--t-hover) ease,
+    transform var(--t-press) var(--ease-out);
+}
+.tk-time strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.tk-time span {
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+.tk-time:hover {
+  border-color: var(--muted);
+}
+.tk-time:active {
+  transform: translateY(1px);
+}
+.tk-time[aria-pressed="true"] {
+  border-color: var(--text);
+  outline: 1px solid var(--text);
+  outline-offset: -2px;
+  background: var(--raised);
+}
+.tk-time-loading {
+  height: 58px;
+  border: 0;
+  background: var(--raised);
+}
+.tk-times .empty {
+  flex: 1;
+  min-height: 58px;
+}
+
+/* ---------- the seat map ---------- */
+.tk-seats > header {
+  flex-wrap: wrap;
+}
+.tk-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+.tk-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tk-legend li::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--control);
+  background: var(--seat-free);
+}
+.tk-legend li[data-state="taken"]::before {
+  border-color: transparent;
+  background: var(--seat-taken);
+}
+.tk-legend li[data-state="mine"]::before {
+  border-color: transparent;
+  background: var(--seat-mine);
+}
+.tk-legend li[data-state="held"]::before {
+  border: 1.5px dashed var(--seat-mine);
+}
+
+.tk-room {
+  container-type: inline-size;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 4px 0 8px;
+}
+.tk-room-loading {
+  height: clamp(300px, 52vw, 460px);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+}
+.tk-screen {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 16px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+.tk-screen::before {
+  content: "";
+  width: 72%;
+  height: 6px;
+  border-radius: 0 0 6px 6px;
+  background: var(--seat-taken);
+}
+.tk-walkway {
+  height: 14px;
+}
+.tk-row {
+  /* 18 seats, the aisle and two labels share the room's width */
+  --seat: clamp(14px, calc((100cqi - 84px) / 19.6), 30px);
+  display: flex;
+  align-items: center;
+  gap: max(2px, calc(var(--seat) * 0.12));
+}
+.tk-row-label {
+  width: 20px;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+}
+.tk-aisle {
+  width: calc(var(--seat) * 0.8);
+}
+.tiketa .tk-seat {
+  display: grid;
+  place-items: center;
+  width: var(--seat);
+  height: var(--seat);
+  padding: 0;
+  border: 1px solid var(--control);
+  border-radius: calc(var(--seat) * 0.22) calc(var(--seat) * 0.22) 3px 3px;
+  background: var(--seat-free);
+  color: var(--muted);
+  font-size: max(9px, calc(var(--seat) * 0.34));
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color var(--t-hover) ease,
+    border-color var(--t-hover) ease,
+    color var(--t-hover) ease,
+    transform var(--t-press) var(--ease-out);
+}
+.tk-seat:hover:not(:disabled) {
+  border-color: var(--text);
+  color: var(--text);
+}
+.tk-seat:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.tk-seat[data-state="taken"] {
+  border-color: transparent;
+  background: var(--seat-taken);
+  color: transparent;
+  cursor: not-allowed;
+}
+.tk-seat[data-state="mine"] {
+  border-color: transparent;
+  background: var(--seat-mine);
+  color: #fff;
+  font-weight: 600;
+}
+.tk-seat[data-state="held"] {
+  border: 1.5px dashed var(--seat-mine);
+  color: var(--seat-mine);
+  font-weight: 600;
+}
+.tk-seat[data-state="free"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+@container (max-width: 520px) {
+  .tiketa .tk-seat,
+  .tiketa .tk-seat[data-state] {
+    color: transparent; /* numbers return when the room is zoomed */
+  }
+}
+.tk-zoom {
+  display: none;
+}
+.tk-room-frame {
+  min-width: 0;
+}
+
+/* ---------- checkout ---------- */
+.tk-checkout {
+  position: sticky; /* the choice and the Book button stay in view while the map scrolls */
+  bottom: calc(-1 * var(--pad));
+  z-index: 1;
+  padding-bottom: 16px;
+  background: var(--surface);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px) auto;
+  align-items: end;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+.tk-choice {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.tk-choice-seats {
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.tk-choice-total {
+  color: var(--muted);
+}
+.tk-choice-total b {
+  color: var(--text);
+  font-weight: 700;
+}
+.tk-book {
+  height: 38px;
+  min-width: 128px;
+}
+.tk-book:disabled,
+.tk-chat .btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.tk-notice {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  line-height: 20px;
+}
+.tk-notice[data-kind="booked"] {
+  background: var(--pill-positive-bg);
+  color: var(--pill-positive-ink);
+}
+.tk-notice[data-kind="refused"] {
+  background: var(--pill-negative-bg);
+  color: var(--pill-negative-ink);
+}
+.tk-code {
+  font-family: var(--code);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* ---------- bookings ---------- */
+.tk-bookings table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tk-bookings th {
+  height: 36px;
+  padding: 0 12px 0 0;
+  font-size: var(--fs-small);
+  font-weight: 400;
+  color: var(--muted);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.tk-bookings td {
+  height: 48px;
+  padding: 6px 12px 6px 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.tk-bookings th:last-child,
+.tk-bookings td:last-child {
+  padding-right: 0;
+}
+.tk-bookings .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tk-film-cell span {
+  display: block;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+.tk-more {
+  margin-top: 8px;
+}
+.tk-bookings > header .meta {
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+
+/* ---------- chat ---------- */
+.tk-chat {
+  grid-area: chat;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100svh - var(--topbar-height) - var(--sheet-inset) - 2 * var(--pad) - 2px);
+  min-height: 460px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+.tk-chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.tk-chat-head h2 {
+  font-size: var(--fs-section);
+  font-weight: 600;
+}
+.tk-usage {
+  margin-top: 2px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+.tk-log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tk-line {
+  max-width: 92%;
+  line-height: 21px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.tk-line[data-role="user"] {
+  align-self: flex-end;
+  padding: 8px 12px;
+  border-radius: 10px 10px 2px 10px;
+  background: var(--raised);
+}
+.tk-line[data-role="failure"] {
+  color: var(--negative);
+  font-size: 13px;
+}
+.tk-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.tk-activity::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: tk-pulse 1s ease-in-out infinite alternate;
+}
+@keyframes tk-pulse {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.tk-starters {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  grid-template-rows: 1fr;
+  align-content: end;
+}
+.tk-intro {
+  display: grid;
+  gap: 8px;
+  align-self: start;
+  margin-bottom: 16px;
+  line-height: 21px;
+}
+.tk-intro p:last-child {
+  color: var(--muted);
+}
+.tiketa .tk-starter {
+  padding: 8px 12px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-hover) ease;
+}
+.tk-starter:hover {
+  border-color: var(--text);
+}
+.tk-ticket {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--pill-positive-bg);
+  color: var(--pill-positive-ink);
+}
+.tk-ticket .tk-code {
+  font-size: 15px;
+}
+.tk-summary {
+  margin: 0 12px 12px;
+  padding: 14px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-card);
+  background: var(--raised);
+}
+.tk-summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.tk-summary dl {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.tk-summary dl div {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+}
+.tk-summary dt {
+  color: var(--muted);
+}
+.tk-summary dd {
+  margin: 0;
+}
+.tk-summary-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.tk-summary-actions .primary {
+  flex: 1;
+}
+.tiketa .tk-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.tk-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--rule);
+}
+.tiketa .tk-composer textarea {
+  min-height: 40px;
+  max-height: 120px;
+  padding: 9px 12px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  line-height: 20px;
+  resize: none;
+}
+.tk-composer textarea::placeholder {
+  color: var(--faint);
+}
+.tk-composer .btn {
+  height: 40px;
+}
+
+/* ---------- the photo in the sidebar ---------- */
+.tk-photo {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0 8px;
+}
+.tk-photo img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.tk-photo figcaption {
+  font-size: var(--fs-small);
+  line-height: 16px;
+  color: var(--muted);
+}
+.tk-photo a {
+  color: inherit;
+}
+
+/* ---------- tablet and phone: one region at a time ---------- */
+@media (max-width: 860px) {
+  .tk-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "switch"
+      "form"
+      "chat";
+    grid-template-rows: auto;
+  }
+  .tk-switch {
+    grid-area: switch;
+    display: flex;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  .tk-switch button {
+    flex: 1;
+    min-height: 36px;
+  }
+  .tk-switch button[aria-selected="true"] {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .tk-layout[data-view="form"] .tk-chat,
+  .tk-layout[data-view="chat"] .tk-form {
+    display: none;
+  }
+  .tk-chat {
+    position: static;
+    height: calc(100svh - var(--topbar-height) - 160px);
+    min-height: 420px;
+  }
+}
+@media (max-width: 640px) {
+  .tk-seats {
+    padding: 16px 12px;
+  }
+  .tk-seats > header {
+    gap: 8px 12px;
+  }
+  .tk-zoom {
+    display: inline-flex;
+    height: 32px;
+  }
+  .tk-legend {
+    order: 3;
+    width: 100%;
+    gap: 12px;
+  }
+  .tk-room-frame[data-zoomed="true"] {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+  .tk-room-frame[data-zoomed="true"] .tk-room {
+    container-type: normal;
+    width: max-content;
+    padding-inline: 4px;
+  }
+  .tk-room-frame[data-zoomed="true"] .tk-row {
+    --seat: 26px;
+  }
+  .tk-room-frame[data-zoomed="true"] .tk-row-label {
+    position: sticky; /* the row letter stays in view while the room scrolls */
+    z-index: 1;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    background: var(--surface);
+  }
+  .tk-room-frame[data-zoomed="true"] .tk-row-label:first-child {
+    left: 0;
+  }
+  .tk-room-frame[data-zoomed="true"] .tk-row-label:last-child {
+    right: 0;
+  }
+  .tiketa .tk-room-frame[data-zoomed="true"] .tk-seat {
+    color: var(--muted);
+  }
+  .tiketa .tk-room-frame[data-zoomed="true"] .tk-seat[data-state="mine"] {
+    color: #fff;
+  }
+  .tiketa .tk-room-frame[data-zoomed="true"] .tk-seat[data-state="held"] {
+    color: var(--seat-mine);
+  }
+  .tiketa .tk-room-frame[data-zoomed="true"] .tk-seat[data-state="taken"] {
+    color: transparent;
+  }
+  .tk-bookings > header {
+    flex-wrap: wrap;
+  }
+  .tk-days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    width: 100%;
+  }
+  .tk-days button {
+    min-width: 0;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .tk-checkout {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name name"
+      "choice book";
+    align-items: center;
+    gap: 12px;
+  }
+  .tk-checkout[data-active="false"] {
+    position: static; /* it follows the map only once seats are chosen */
+  }
+  .tk-name {
+    grid-area: name;
+  }
+  .tk-choice {
+    grid-area: choice;
+  }
+  .tk-book {
+    grid-area: book;
+    height: 44px;
+  }
+  .tk-time {
+    min-width: calc(50% - 4px);
+    flex: 1;
+  }
+  .tk-bookings thead {
+    display: none;
+  }
+  .tk-bookings tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tk-bookings td {
+    height: auto;
+    padding: 0;
+    border: 0;
+  }
+  /* line 1: the film and the total; then when, seats and code in grey, the channel on the right */
+  .tk-bookings td:nth-child(2) {
+    grid-area: 1 / 1;
+  }
+  .tk-bookings td:nth-child(5) {
+    grid-area: 1 / 2;
+    font-weight: 600;
+  }
+  .tk-bookings td:nth-child(3) {
+    grid-area: 2 / 1;
+  }
+  .tk-bookings td:nth-child(6) {
+    grid-area: 2 / 2;
+    justify-self: end;
+  }
+  .tk-bookings td:nth-child(4) {
+    grid-area: 3 / 1;
+  }
+  .tk-bookings td:nth-child(1) {
+    grid-area: 4 / 1;
+  }
+  .tk-bookings td:nth-child(3),
+  .tk-bookings td:nth-child(4),
+  .tk-bookings td:nth-child(1) {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: left;
+  }
+  .tk-bookings .tk-film-cell span {
+    display: inline;
+  }
+  .tk-bookings .tk-film-cell span::before {
+    content: " · ";
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tk-activity::before {
+    animation: none;
+  }
+  .tk-seat,
+  .tk-time,
+  .tk-poster {
+    transition: none;
+  }
+}
+
+fieldset.tk-room {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+}

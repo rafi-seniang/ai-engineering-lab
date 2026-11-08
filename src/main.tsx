@@ -6,6 +6,7 @@ import { GatekeeperConsole } from "./apps/gatekeeper/GatekeeperConsole";
 import { LedgerBook } from "./apps/ledger/LedgerBook";
 import { LensSearch } from "./apps/lens/LensSearch";
 import { PilahInbox } from "./apps/pilah/PilahInbox";
+import { TiketaBooking } from "./apps/tiketa/TiketaBooking";
 import { Lobby } from "./lobby/Lobby";
 import { NotFound } from "./NotFound";
 import "./styles/brand.css";
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
   { path: "/gatekeeper", element: <GatekeeperConsole /> },
   { path: "/lens", element: <LensSearch /> },
   { path: "/ledger", element: <LedgerBook /> },
+  { path: "/tiketa", element: <TiketaBooking /> },
   { path: "*", element: <NotFound /> },
 ]);
 
