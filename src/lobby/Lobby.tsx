@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { PROJECTS, type Project } from "../lab/projects";
+import { PROJECTS, type Project, siteUrl } from "../lab/projects";
 import { type ServiceStatus, STATUS_WORDS, useServiceStatus } from "../lab/useServiceStatus";
 import { LAB_SPECS, LAB_SUBTITLE, OWNER } from "./content";
 import "./lobby.css";
@@ -29,7 +29,7 @@ function ProjectCardBody({ project, status }: { project: Project; status: Servic
             <i aria-hidden="true" />
             {STATUS_WORDS[status]}
           </span>
-          {isOn && <span className="lb-open">Open</span>}
+          {isOn && <span className="lb-open">{project.route ? "Open" : "Open site"}</span>}
         </div>
       </div>
       <p className="lb-card-summary">{project.summary}</p>
@@ -114,12 +114,18 @@ export function Lobby() {
             {PROJECTS.map((project) => {
               const status = statusById[project.id] ?? "offline";
               const isOn = status === "live";
+              const site = siteUrl(project);
               return (
                 <li key={project.id}>
-                  {isOn ? (
+                  {isOn && project.route ? (
                     <Link className="lb-card is-on" to={project.route}>
                       <ProjectCardBody project={project} status={status} />
                     </Link>
+                  ) : isOn && site ? (
+                    // A project with its own site opens there, in this tab: it is a product of its own, not a screen
+                    <a className="lb-card is-on" href={site}>
+                      <ProjectCardBody project={project} status={status} />
+                    </a>
                   ) : (
                     <div className="lb-card is-off" aria-disabled="true">
                       <ProjectCardBody project={project} status={status} />
