@@ -28,15 +28,9 @@ interface SortRun {
   result: SortedItem;
 }
 
+type EngineId = EngineOption["id"];
+
 const DEFAULT_ENGINES: EngineOption[] = [
-  {
-    id: "laya",
-    name: "Laya",
-    provider: "Convai Innovations (Apache 2.0, local GPU)",
-    available: true,
-    status_label: "Active",
-    detail: "ModernBERT-large for English and mmBERT-base for 100+ languages.",
-  },
   {
     id: "jev",
     name: "Jev",
@@ -44,6 +38,22 @@ const DEFAULT_ENGINES: EngineOption[] = [
     available: false,
     status_label: "Needs key",
     detail: "Add JEV_API_KEY to the secrets file to enable Jev.",
+  },
+  {
+    id: "gemini",
+    name: "Gemini",
+    provider: "Google AI Studio (gemini-decision-1, free tier)",
+    available: false,
+    status_label: "Needs key",
+    detail: "Add GEMINI_API_KEY to the secrets file to enable Gemini Decision 1.",
+  },
+  {
+    id: "laya",
+    name: "Laya",
+    provider: "Convai Innovations (Apache 2.0, local GPU)",
+    available: true,
+    status_label: "Active",
+    detail: "ModernBERT-large for English and mmBERT-base for 100+ languages.",
   },
 ];
 
@@ -238,7 +248,7 @@ function validateRule(
 export function PilahInbox() {
   const [presetId, setPresetId] = useState<string>(DEFAULT_PRESET.id);
   const [sampleIndex, setSampleIndex] = useState<number>(0);
-  const [selectedEngine, setSelectedEngine] = useState<"laya" | "jev">("laya");
+  const [selectedEngine, setSelectedEngine] = useState<EngineId>("jev");
   const [instructions, setInstructions] = useState<string>(DEFAULT_PRESET.instructions);
   const [confidenceGate, setConfidenceGate] = useState<number>(DEFAULT_PRESET.gate);
   const [choices, setChoices] = useState<EditableChoice[]>(() => toEditableChoices(DEFAULT_PRESET.choices));
@@ -256,13 +266,13 @@ export function PilahInbox() {
   });
   const engines = enginesQuery.data?.engines ?? DEFAULT_ENGINES;
   const activePreset = PRESETS.find((preset) => preset.id === presetId) ?? DEFAULT_PRESET;
-  const selectedEngineName = engines.find((engineOption) => engineOption.id === selectedEngine)?.name ?? "Laya";
+  const selectedEngineName = engines.find((engineOption) => engineOption.id === selectedEngine)?.name ?? "Jev";
 
   const sortItems = useCallback(
     async (
       items: string[],
       rule: {
-        engine: "laya" | "jev";
+        engine: EngineId;
         instructions: string;
         choices: EditableChoice[];
         gate: number;
@@ -322,18 +332,21 @@ export function PilahInbox() {
   );
 
   useEffect(() => {
-    if (booted.current) return;
+    if (booted.current || !enginesQuery.data) return;
     booted.current = true;
+    const initialEngine =
+      enginesQuery.data.default_engine ?? enginesQuery.data.engines.find((option) => option.available)?.id ?? "jev";
+    setSelectedEngine(initialEngine);
     const firstSample = DEFAULT_PRESET.samples[0]?.text;
     if (firstSample) {
       void sortItems([firstSample], {
-        engine: "laya",
+        engine: initialEngine,
         instructions: DEFAULT_PRESET.instructions,
         choices: toEditableChoices(DEFAULT_PRESET.choices),
         gate: DEFAULT_PRESET.gate,
       });
     }
-  }, [sortItems]);
+  }, [enginesQuery.data, sortItems]);
 
   function applyPreset(preset: RulePreset) {
     const nextChoices = toEditableChoices(preset.choices);
@@ -593,6 +606,12 @@ export function PilahInbox() {
                 </span>
               )}
             </div>
+            {selectedEngine === "gemini" && (
+              <p className="hint">
+                Note: Gemini runs on Google AI Studio's free tier, so submitted text is sent to Google. Sample presets
+                are safe to test.
+              </p>
+            )}
           </form>
 
           <section className="well pilah-prediction" aria-label="Model prediction">

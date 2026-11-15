@@ -69,13 +69,20 @@ function finding(
   if (uploadsView) {
     return count === 0
       ? "No user uploads in the database yet. Click Add to database to index your own images."
-      : `${count} ${count === 1 ? "picture" : "pictures"} uploaded to your local Typesense database.`;
+      : `${count} ${count === 1 ? "picture" : "pictures"} uploaded to Typesense.`;
   }
-  if (picture) return `${count} photographs that look like your picture.`;
+  if (picture) {
+    return count === 0
+      ? "No photographs closely matched your picture."
+      : `${count} photographs that look like your picture.`;
+  }
   if (result.mode === "caption") {
     return count === 0
       ? `No caption contains a word of “${query}”. Try Semantic or Hybrid.`
       : `${count} captions contain a word of “${query}”.`;
+  }
+  if (count === 0) {
+    return `No photographs matched “${query}”. Try another term or upload a picture.`;
   }
   const inCaption = result.hits.filter((hit) => hit.in_caption).length;
   if (inCaption === 0)
@@ -450,8 +457,8 @@ export function LensSearch() {
 
   const storeName = collection.data?.vector_store || "Typesense 27.1";
   const scopeDetail = collection.data
-    ? `${collection.data.archive ?? collection.data.photographs} archive + ${collection.data.uploaded ?? 0} uploaded`
-    : "EmbeddingGemma 2 · 768-dim";
+    ? `${collection.data.model} · ${collection.data.archive ?? collection.data.photographs} archive + ${collection.data.uploaded ?? 0} uploaded`
+    : "Gemini Embedding 2 · 768-dim";
   const emptyCopy = activeTag
     ? `No pictures in "${activeTag}" yet. Upload an image without tags to place it in Untagged.`
     : uploadsView && upload === null
@@ -584,7 +591,8 @@ export function LensSearch() {
             <div>
               <h2>Add images to Typesense</h2>
               <p className="meta">
-                Images uploaded without tags are placed under Untagged and shown directly in the gallery.
+                Images uploaded without tags are placed under Untagged and shown directly in the gallery. Pictures use
+                Google AI Studio's free tier, so uploads are sent to Google.
               </p>
             </div>
             <button type="button" className="btn ghost" onClick={() => setIngestOpen(false)}>
@@ -688,6 +696,7 @@ export function LensSearch() {
               </button>
             ))}
           </div>
+          <p className="meta">Picture searches and uploads use Google AI Studio's free tier and are sent to Google.</p>
         </div>
       )}
 

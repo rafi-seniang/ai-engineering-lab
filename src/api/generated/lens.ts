@@ -89,7 +89,7 @@ export interface paths {
     put?: never;
     /**
      * Add Photographs
-     * @description Embed one or more pictures with EmbeddingGemma 2 and index them into Typesense.
+     * @description Embed one or more pictures with Gemini Embedding 2 and index them into Typesense.
      */
     post: operations["add_photographs_v1_photographs_post"];
     delete?: never;
