@@ -13,8 +13,8 @@ import {
 import { AppShell } from "../shared/AppShell";
 import "./lens.css";
 
-const DEFAULT_QUERY = "anjing";
-const EXAMPLES = ["anjing", "a kitten curled up on a cushion", "kereta api", "Brooklyn Bridge"];
+const DEFAULT_QUERY = "surfing";
+const EXAMPLES = ["selancar di ombak", "yellow sports car", "planet Mars", "Burj Khalifa"];
 const MODES: { value: Mode; label: string }[] = [
   { value: "picture", label: "Semantic" },
   { value: "hybrid", label: "Hybrid" },
@@ -23,7 +23,7 @@ const MODES: { value: Mode; label: string }[] = [
 const ORIGINS: { value: OriginFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "upload", label: "My uploads" },
-  { value: "met", label: "Met archive" },
+  { value: "met", label: "Curated archive" },
 ];
 const ROW_HEIGHT = 168;
 const SIMILAR_COUNT = 6;
@@ -181,7 +181,7 @@ function Detail({
           <dd>{photograph.medium}</dd>
         </div>
         <div>
-          <dt>{isUpload ? "Tags" : "The Met's subjects"}</dt>
+          <dt>{isUpload ? "Tags" : "Subjects"}</dt>
           <dd>{photograph.tags.length > 0 ? photograph.tags.join(", ") : "Untagged"}</dd>
         </div>
       </dl>
@@ -199,7 +199,7 @@ function Detail({
         </div>
       ) : (
         <a className="card-link" href={photograph.source_url} target="_blank" rel="noreferrer">
-          At The Met, CC0
+          Source & licence
         </a>
       )}
       <h3>Looks like this</h3>
