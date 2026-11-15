@@ -151,9 +151,9 @@ export function GatekeeperConsole() {
   const routed = totals ? totals.small_routed + totals.strong_routed : 0;
   const offline = stats.isError && events.isError;
   let finding = "Reading the gate's log.";
-  if (offline) finding = "Gatekeeper is not running on port 8020.";
+  if (offline) finding = "Gatekeeper is not responding.";
   else if (totals && totals.requests === 0)
-    finding = "No requests yet. Send one below, or point an OpenAI client at port 8020.";
+    finding = "No requests yet. Send a test prompt below or call the OpenAI-compatible endpoint.";
   else if (totals)
     finding = `${totals.requests} requests: ${totals.blocked} blocked, ${totals.cached} from the cache, ${share(totals.small_routed, routed)} of the rest answered by the small model.`;
 
@@ -163,7 +163,7 @@ export function GatekeeperConsole() {
       mark={<Mark size={20} />}
       scope={{
         line: "LLM gateway",
-        detail: meta.data ? `Port 8020 · ${meta.data.engine}` : "Port 8020 · IndoPII + Jev",
+        detail: meta.data ? meta.data.engine : "IndoPII + Jev",
       }}
       nav={[{ label: "Gate", to: "/gatekeeper", icon: GATE_ICON, current: true }]}
     >

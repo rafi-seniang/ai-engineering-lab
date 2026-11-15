@@ -14,10 +14,10 @@ export const OWNER = {
 };
 
 export const LAB_SUBTITLE =
-  "Six standalone FastAPI backends sharing one 8 GB RTX 5050, DeepSeek V4.1, and Typesense. Services open when their port is on.";
+  "Four live AI backends running behind one gateway, combining on-host ONNX and vector search with Jev, Gemini, and DeepSeek.";
 
 export const LAB_SPECS: { label: string; value: string }[] = [
-  { label: "Local GPU", value: "RTX 5050 Laptop, 8 GB VRAM" },
-  { label: "Local models", value: "Laya, DeBERTa" },
-  { label: "Cloud & vector", value: "Jev, Gemini, DeepSeek V4.1, Typesense 27.1" },
+  { label: "AI model", value: "Jev, Gemini, DeepSeek" },
+  { label: "On-host engine", value: "IndoPII ONNX, Typesense 27.1" },
+  { label: "Runtime", value: "CPU VPS (Docker, Caddy)" },
 ];

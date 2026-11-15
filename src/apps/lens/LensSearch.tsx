@@ -450,7 +450,7 @@ export function LensSearch() {
   const selected = selectedId ? known.get(selectedId) : undefined;
   const isBrowsing = (uploadsView || activeTag !== null) && upload === null;
   const sub = offline
-    ? "Lens is not running on port 8030."
+    ? "Lens is not responding."
     : search.isError
       ? "The search failed. Try again."
       : finding(search.data, query, upload !== null, uploadsView && upload === null, upload ? null : activeTag);
