@@ -1,12 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
-import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { type ChoiceOption, type EngineOption, pilah, type SortedItem, unwrap } from "../../api/pilah";
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ChoiceOption,
+  type EngineOption,
+  type ImageItemInput,
+  pilah,
+  type SortedItem,
+  unwrap,
+} from "../../api/pilah";
 import { AppShell } from "../shared/AppShell";
 import "./inbox.css";
 
 interface EditableChoice extends ChoiceOption {
   key: string;
 }
+
+type InputMode = "text" | "images";
 
 interface RulePreset {
   id: string;
@@ -17,10 +26,27 @@ interface RulePreset {
   samples: { label: string; text: string }[];
 }
 
+interface ImageRulePreset {
+  id: string;
+  name: string;
+  instructions: string;
+  gate: number;
+  choices: ChoiceOption[];
+}
+
+interface QueuedImage {
+  id: string;
+  name: string;
+  mimeType: "image/jpeg" | "image/png" | "image/webp";
+  dataBase64: string;
+  previewUrl: string;
+}
+
 interface SortRun {
   id: string;
   at: string;
   text: string;
+  imagePreviewUrl?: string;
   engine: string;
   latencyMs: number;
   gate: number;
@@ -164,6 +190,181 @@ const PRESETS: RulePreset[] = [
 
 const DEFAULT_PRESET = PRESETS[0] as RulePreset;
 
+const IMAGE_PRESETS: ImageRulePreset[] = [
+  {
+    id: "image-scenes",
+    name: "Image scene A / B / C",
+    instructions: "Inspect this image and decide which choice (A, B, or C) best matches its primary subject.",
+    gate: 0.7,
+    choices: [
+      { label: "A", description: "Architecture, skyscrapers, bridges, or urban skylines" },
+      { label: "B", description: "Ocean beaches, surfing, wildlife, mountains, or outdoor nature" },
+      { label: "C", description: "Space, planets, rockets, robotics, or science laboratories" },
+    ],
+  },
+  {
+    id: "image-quality",
+    name: "Visual safety & quality",
+    instructions: "Classify whether this uploaded photo is sharp and publishable, blurry/occluded, or off-policy.",
+    gate: 0.75,
+    choices: [
+      { label: "A", description: "Clear, well-lit photo suitable for catalogue publishing" },
+      { label: "B", description: "Too dark, blurry, cropped, or unreadable subject" },
+      { label: "C", description: "Text screenshot, blank slide, or unrelated non-photo graphic" },
+    ],
+  },
+];
+
+const DEFAULT_IMAGE_PRESET = IMAGE_PRESETS[0] as ImageRulePreset;
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function normalizeImageMime(mime: string): "image/jpeg" | "image/png" | "image/webp" {
+  if (mime === "image/png" || mime === "image/webp") return mime;
+  return "image/jpeg";
+}
+
+async function prepareImageFile(file: File, index: number): Promise<QueuedImage> {
+  const rawBuffer = await file.arrayBuffer();
+  const fallbackMime = normalizeImageMime(file.type);
+  const fallbackBase64 = arrayBufferToBase64(rawBuffer);
+  const fallbackPreview = `data:${fallbackMime};base64,${fallbackBase64}`;
+
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const maxSide = 1024;
+      const scale = Math.min(1, maxSide / Math.max(bitmap.width || 1, bitmap.height || 1));
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.86);
+        const comma = dataUrl.indexOf(",");
+        if (comma > 0) {
+          bitmap.close();
+          return {
+            id: `img-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+            name: file.name || `image-${index + 1}.jpg`,
+            mimeType: "image/jpeg",
+            dataBase64: dataUrl.slice(comma + 1),
+            previewUrl: dataUrl,
+          };
+        }
+      }
+      bitmap.close();
+    } catch {
+      // Fall back to raw encoded bytes when bitmap decode is unavailable.
+    }
+  }
+
+  return {
+    id: `img-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+    name: file.name || `image-${index + 1}`,
+    mimeType: fallbackMime,
+    dataBase64: fallbackBase64,
+    previewUrl: fallbackPreview,
+  };
+}
+
+function buildSampleSvg(kind: "skyline" | "ocean" | "planet"): string {
+  if (kind === "skyline") {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#fde047"/></linearGradient></defs>
+      <rect width="480" height="360" fill="url(#g)"/>
+      <circle cx="360" cy="95" r="42" fill="#fff7ed" opacity="0.9"/>
+      <rect x="65" y="150" width="60" height="210" fill="#1e293b"/>
+      <rect x="145" y="90" width="55" height="270" fill="#0f172a"/>
+      <polygon points="232,25 256,140 264,360 200,360 208,140" fill="#1e293b"/>
+      <rect x="285" y="125" width="70" height="235" fill="#334155"/>
+      <rect x="370" y="175" width="55" height="185" fill="#1e293b"/>
+    </svg>`;
+  }
+  if (kind === "ocean") {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+      <rect width="480" height="220" fill="#38bdf8"/>
+      <rect y="220" width="480" height="140" fill="#0284c7"/>
+      <path d="M0 220 Q120 155 260 220 T480 215 L480 360 L0 360 Z" fill="#0369a1"/>
+      <path d="M90 210 Q180 150 270 190" stroke="#ffffff" stroke-width="14" fill="none" stroke-linecap="round"/>
+      <ellipse cx="260" cy="235" rx="46" ry="12" transform="rotate(-18 260 235)" fill="#facc15"/>
+      <circle cx="95" cy="75" r="32" fill="#fef08a"/>
+    </svg>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+    <rect width="480" height="360" fill="#090d16"/>
+    <circle cx="70" cy="65" r="2.5" fill="#f8fafc"/><circle cx="145" cy="40" r="2" fill="#93c5fd"/>
+    <circle cx="380" cy="58" r="3" fill="#fde68a"/><circle cx="420" cy="290" r="2.5" fill="#f8fafc"/>
+    <circle cx="90" cy="300" r="2" fill="#e2e8f0"/><circle cx="335" cy="310" r="2" fill="#cbd5e1"/>
+    <circle cx="240" cy="180" r="78" fill="#dc2626"/>
+    <circle cx="220" cy="160" r="56" fill="#ea580c" opacity="0.7"/>
+    <ellipse cx="240" cy="182" rx="145" ry="30" transform="rotate(-14 240 182)" fill="none" stroke="#fed7aa" stroke-width="12"/>
+  </svg>`;
+}
+
+async function createSampleImages(): Promise<QueuedImage[]> {
+  const specs: Array<{ name: string; kind: "skyline" | "ocean" | "planet" }> = [
+    { name: "skyline-tower.jpg", kind: "skyline" },
+    { name: "ocean-surf.jpg", kind: "ocean" },
+    { name: "planet-cosmos.jpg", kind: "planet" },
+  ];
+  return Promise.all(
+    specs.map(async ({ name, kind }, index) => {
+      const svgText = buildSampleSvg(kind);
+      const canvas = document.createElement("canvas");
+      canvas.width = 480;
+      canvas.height = 360;
+      const ctx = canvas.getContext("2d");
+      if (ctx && typeof Image !== "undefined") {
+        try {
+          const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgText)}`;
+          const loaded = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = svgUrl;
+          });
+          ctx.drawImage(loaded, 0, 0, 480, 360);
+          const jpegUrl = canvas.toDataURL("image/jpeg", 0.9);
+          const comma = jpegUrl.indexOf(",");
+          if (comma > 0) {
+            return {
+              id: `sample-${kind}-${index}`,
+              name,
+              mimeType: "image/jpeg",
+              dataBase64: jpegUrl.slice(comma + 1),
+              previewUrl: jpegUrl,
+            };
+          }
+        } catch {
+          // Fall through to compact solid-color PNG fallback if SVG rasterization fails.
+        }
+      }
+      // Minimal 1x1 PNG fallback for headless test environments without Canvas 2D SVG rasterization.
+      const fallbackPng =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+      return {
+        id: `sample-${kind}-${index}`,
+        name: name.replace(".jpg", ".png"),
+        mimeType: "image/png",
+        dataBase64: fallbackPng,
+        previewUrl: `data:image/png;base64,${fallbackPng}`,
+      };
+    }),
+  );
+}
+
 const MODEL_ICON = (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true">
     <path d="M2.5 4h11M2.5 8h7.5M2.5 12h4.5" />
@@ -246,13 +447,17 @@ function validateRule(
 }
 
 export function PilahInbox() {
+  const [inputMode, setInputMode] = useState<InputMode>("text");
   const [presetId, setPresetId] = useState<string>(DEFAULT_PRESET.id);
+  const [imagePresetId, setImagePresetId] = useState<string>(DEFAULT_IMAGE_PRESET.id);
   const [sampleIndex, setSampleIndex] = useState<number>(0);
   const [selectedEngine, setSelectedEngine] = useState<EngineId>("jev");
   const [instructions, setInstructions] = useState<string>(DEFAULT_PRESET.instructions);
   const [confidenceGate, setConfidenceGate] = useState<number>(DEFAULT_PRESET.gate);
   const [choices, setChoices] = useState<EditableChoice[]>(() => toEditableChoices(DEFAULT_PRESET.choices));
   const [draftText, setDraftText] = useState<string>(DEFAULT_PRESET.samples[0]?.text ?? "");
+  const [queuedImages, setQueuedImages] = useState<QueuedImage[]>([]);
+  const [imageResultsById, setImageResultsById] = useState<Record<string, SortRun>>({});
   const [runs, setRuns] = useState<SortRun[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [sorting, setSorting] = useState<boolean>(false);
@@ -367,6 +572,116 @@ export function PilahInbox() {
     }
   }
 
+  function applyImagePreset(preset: ImageRulePreset) {
+    setImagePresetId(preset.id);
+    setInstructions(preset.instructions);
+    setConfidenceGate(preset.gate);
+    setChoices(toEditableChoices(preset.choices));
+  }
+
+  const sortImages = useCallback(
+    async (images: QueuedImage[], rule: { instructions: string; choices: EditableChoice[]; gate: number }) => {
+      if (images.length === 0) {
+        setError("Add between 1 and 10 images to classify.");
+        return;
+      }
+      const { clean, problem } = validateRule(rule.instructions, rule.choices);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+      setSorting(true);
+      setError(null);
+      try {
+        const payloadImages: ImageItemInput[] = images.map((img) => ({
+          name: img.name,
+          mime_type: img.mimeType,
+          data_base64: img.dataBase64,
+        }));
+        const response = unwrap(
+          await pilah.POST("/v1/sort/images", {
+            body: {
+              engine: "gemini",
+              instructions: rule.instructions.trim(),
+              choices: clean,
+              confidence_gate: rule.gate,
+              images: payloadImages,
+            },
+          }),
+        );
+        const stamp = clockNow();
+        const perItemLatency = response.latency_ms / Math.max(response.results.length, 1);
+        const nextMap: Record<string, SortRun> = {};
+        const created: SortRun[] = response.results.map((result, index) => {
+          const runNumber = nextCounter.current++;
+          const img = images[index];
+          const run: SortRun = {
+            id: `run-${runNumber}`,
+            at: stamp,
+            text: img?.name ?? `Image ${index + 1}`,
+            imagePreviewUrl: img?.previewUrl,
+            engine: response.engine,
+            latencyMs: perItemLatency,
+            gate: response.confidence_gate,
+            choices: clean,
+            result,
+          };
+          if (img) nextMap[img.id] = run;
+          return run;
+        });
+        setImageResultsById((prev) => ({ ...prev, ...nextMap }));
+        setRuns((previous) => [...created, ...previous].slice(0, 24));
+        if (created[0]) {
+          setSelectedRunId(created[0].id);
+        }
+      } catch (failure) {
+        setError(failure instanceof Error ? failure.message : "Dispatch did not answer.");
+      } finally {
+        setSorting(false);
+      }
+    },
+    [],
+  );
+
+  function switchInputMode(nextMode: InputMode) {
+    setInputMode(nextMode);
+    setError(null);
+    if (nextMode === "images") {
+      if (engines.some((option) => option.id === "gemini" && option.available)) {
+        setSelectedEngine("gemini");
+      }
+      if (instructions === DEFAULT_PRESET.instructions) {
+        applyImagePreset(DEFAULT_IMAGE_PRESET);
+      }
+    }
+  }
+
+  async function handleFileSelection(event: ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (picked.length === 0) return;
+    const remainingSlots = Math.max(0, 10 - queuedImages.length);
+    const slice = picked.slice(0, remainingSlots);
+    const prepared = await Promise.all(slice.map((file, idx) => prepareImageFile(file, idx)));
+    setQueuedImages((prev) => [...prev, ...prepared].slice(0, 10));
+    if (picked.length > remainingSlots) {
+      setError("Up to 10 images can be queued in one batch.");
+    } else {
+      setError(null);
+    }
+  }
+
+  async function handleLoadSampleImages() {
+    const samples = await createSampleImages();
+    setQueuedImages(samples);
+    setImageResultsById({});
+    setError(null);
+  }
+
+  function removeQueuedImage(id: string) {
+    setQueuedImages((prev) => prev.filter((img) => img.id !== id));
+  }
+
   function applySample(index: number) {
     const sample = activePreset.samples[index];
     if (!sample) return;
@@ -401,6 +716,10 @@ export function PilahInbox() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (inputMode === "images") {
+      void sortImages(queuedImages, { instructions, choices, gate: confidenceGate });
+      return;
+    }
     void sortItems([draftText], {
       engine: selectedEngine,
       instructions,
@@ -426,7 +745,7 @@ export function PilahInbox() {
     ? error
     : activeRun
       ? `Last prediction: ${activeRun.result.choice} (${probability(activeRun.result.top_probability)}) in ${Math.round(activeRun.latencyMs)} ms via ${activeRun.engine} (${activeRun.result.checkpoint}).`
-      : "Write your own prompt and choices, then sort any paragraph with a calibrated System 1 model.";
+      : "Write your own prompt and choices, then sort any paragraph or up to 10 images with calibrated probabilities.";
 
   return (
     <AppShell
@@ -443,6 +762,15 @@ export function PilahInbox() {
           <p className="sub">{subtitle}</p>
         </div>
         <div className="title-actions">
+          <fieldset className="segmented pilah-engines" aria-label="Input mode">
+            <legend className="visually-hidden">Input mode</legend>
+            <button type="button" aria-pressed={inputMode === "text"} onClick={() => switchInputMode("text")}>
+              Text
+            </button>
+            <button type="button" aria-pressed={inputMode === "images"} onClick={() => switchInputMode("images")}>
+              Images (1–10)
+            </button>
+          </fieldset>
           <fieldset className="segmented pilah-engines" aria-label="System 1 model">
             <legend className="visually-hidden">System 1 model</legend>
             {engines.map((engineOption) => (
@@ -450,8 +778,12 @@ export function PilahInbox() {
                 key={engineOption.id}
                 type="button"
                 aria-pressed={selectedEngine === engineOption.id}
-                disabled={!engineOption.available}
-                title={engineOption.detail}
+                disabled={!engineOption.available || (inputMode === "images" && engineOption.id !== "gemini")}
+                title={
+                  inputMode === "images" && engineOption.id !== "gemini"
+                    ? "Image decisions require Gemini Decision"
+                    : engineOption.detail
+                }
                 onClick={() => {
                   if (engineOption.available) setSelectedEngine(engineOption.id);
                 }}
@@ -467,24 +799,45 @@ export function PilahInbox() {
         <section className="panel pilah-rule" aria-label="Sorting rule">
           <header>
             <h2>Rule and choices</h2>
-            <label className="pilah-select-wrap">
-              <span>Preset</span>
-              <select
-                className="input pilah-select"
-                aria-label="Rule preset"
-                value={presetId}
-                onChange={(event) => {
-                  const chosenPreset = PRESETS.find((preset) => preset.id === event.target.value);
-                  if (chosenPreset) applyPreset(chosenPreset);
-                }}
-              >
-                {PRESETS.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {inputMode === "text" ? (
+              <label className="pilah-select-wrap">
+                <span>Preset</span>
+                <select
+                  className="input pilah-select"
+                  aria-label="Rule preset"
+                  value={presetId}
+                  onChange={(event) => {
+                    const chosenPreset = PRESETS.find((preset) => preset.id === event.target.value);
+                    if (chosenPreset) applyPreset(chosenPreset);
+                  }}
+                >
+                  {PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <label className="pilah-select-wrap">
+                <span>Preset</span>
+                <select
+                  className="input pilah-select"
+                  aria-label="Rule preset"
+                  value={imagePresetId}
+                  onChange={(event) => {
+                    const chosenPreset = IMAGE_PRESETS.find((preset) => preset.id === event.target.value);
+                    if (chosenPreset) applyImagePreset(chosenPreset);
+                  }}
+                >
+                  {IMAGE_PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </header>
 
           <div className="field">
@@ -562,54 +915,142 @@ export function PilahInbox() {
         </section>
 
         <div className="pilah-right">
-          <form className="panel pilah-test" onSubmit={handleSubmit} aria-label="Test paragraph">
+          <form
+            className="panel pilah-test"
+            onSubmit={handleSubmit}
+            aria-label={inputMode === "images" ? "Test images" : "Test paragraph"}
+          >
             <header>
-              <h2>Test input</h2>
-              <label className="pilah-select-wrap">
-                <span>Sample</span>
-                <select
-                  className="input pilah-select"
-                  aria-label="Sample input"
-                  value={sampleIndex}
-                  onChange={(event) => applySample(Number(event.target.value))}
-                >
-                  {activePreset.samples.map((sample, index) => (
-                    <option key={sample.label} value={index}>
-                      {sample.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <h2>{inputMode === "images" ? "Test images (1 to 10)" : "Test input"}</h2>
+              {inputMode === "text" ? (
+                <label className="pilah-select-wrap">
+                  <span>Sample</span>
+                  <select
+                    className="input pilah-select"
+                    aria-label="Sample input"
+                    value={sampleIndex}
+                    onChange={(event) => applySample(Number(event.target.value))}
+                  >
+                    {activePreset.samples.map((sample, index) => (
+                      <option key={sample.label} value={index}>
+                        {sample.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <div className="pilah-image-toolbar">
+                  <button type="button" className="btn" onClick={() => void handleLoadSampleImages()}>
+                    Load 3 sample images
+                  </button>
+                  <label className="btn pilah-upload-label">
+                    Choose images
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      className="visually-hidden"
+                      aria-label="Choose images to classify"
+                      onChange={(event) => void handleFileSelection(event)}
+                    />
+                  </label>
+                </div>
+              )}
             </header>
 
-            <textarea
-              id="pilah-input"
-              className="pilah-textarea"
-              aria-label="Paragraph to sort"
-              rows={3}
-              maxLength={4000}
-              placeholder="Write or paste a paragraph in English or Indonesian..."
-              value={draftText}
-              onChange={(event) => setDraftText(event.target.value)}
-            />
+            {inputMode === "text" ? (
+              <textarea
+                id="pilah-input"
+                className="pilah-textarea"
+                aria-label="Paragraph to sort"
+                rows={3}
+                maxLength={4000}
+                placeholder="Write or paste a paragraph in English or Indonesian..."
+                value={draftText}
+                onChange={(event) => setDraftText(event.target.value)}
+              />
+            ) : queuedImages.length === 0 ? (
+              <div className="pilah-image-empty">
+                <p>Upload 1 to 10 images (JPEG, PNG, WebP) or load 3 sample images to classify into A, B, C...</p>
+              </div>
+            ) : (
+              <ul className="pilah-image-grid" aria-label="Queued images">
+                {queuedImages.map((img) => {
+                  const run = imageResultsById[img.id];
+                  const selected = run && activeRun?.id === run.id;
+                  return (
+                    <li key={img.id} className={selected ? "pilah-image-card is-selected" : "pilah-image-card"}>
+                      <button
+                        type="button"
+                        className="pilah-image-select"
+                        onClick={() => {
+                          if (run) setSelectedRunId(run.id);
+                        }}
+                      >
+                        <img src={img.previewUrl} alt={img.name} />
+                        <span className="pilah-image-name">{img.name}</span>
+                        {run && (
+                          <span className={`pill ${run.result.passed_gate ? "pos" : "warn"}`}>
+                            {run.result.choice} · {probability(run.result.top_probability)}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="pilah-image-remove"
+                        aria-label={`Remove ${img.name}`}
+                        onClick={() => removeQueuedImage(img.id)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
 
             <div className="pilah-actions">
-              <button type="submit" className="btn primary" disabled={sorting}>
-                {sorting ? "Sorting..." : `Sort with ${selectedEngineName}`}
-              </button>
-              <button type="button" className="btn" disabled={sorting} onClick={handleRunSamples}>
-                Sort {activePreset.samples.length} samples
-              </button>
+              {inputMode === "text" ? (
+                <>
+                  <button type="submit" className="btn primary" disabled={sorting}>
+                    {sorting ? "Sorting..." : `Sort with ${selectedEngineName}`}
+                  </button>
+                  <button type="button" className="btn" disabled={sorting} onClick={handleRunSamples}>
+                    Sort {activePreset.samples.length} samples
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button type="submit" className="btn primary" disabled={sorting || queuedImages.length === 0}>
+                    {sorting
+                      ? "Sorting..."
+                      : `Sort ${queuedImages.length || ""} ${queuedImages.length === 1 ? "image" : "images"}`}
+                  </button>
+                  {queuedImages.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={sorting}
+                      onClick={() => {
+                        setQueuedImages([]);
+                        setImageResultsById({});
+                      }}
+                    >
+                      Clear images
+                    </button>
+                  )}
+                </>
+              )}
               {error && (
                 <span className="pilah-error" role="alert">
                   {error}
                 </span>
               )}
             </div>
-            {selectedEngine === "gemini" && (
+            {(selectedEngine === "gemini" || inputMode === "images") && (
               <p className="hint">
-                Note: Gemini runs on Google AI Studio's free tier, so submitted text is sent to Google. Sample presets
-                are safe to test.
+                Note: Gemini runs on Google AI Studio's free tier (3-key rotation), so submitted inputs are sent to
+                Google.
               </p>
             )}
           </form>
@@ -626,7 +1067,14 @@ export function PilahInbox() {
 
             {activeRun ? (
               <>
-                <p className="pilah-quote">{activeRun.text}</p>
+                {activeRun.imagePreviewUrl ? (
+                  <div className="pilah-quote-image">
+                    <img src={activeRun.imagePreviewUrl} alt={activeRun.text} />
+                    <span>{activeRun.text}</span>
+                  </div>
+                ) : (
+                  <p className="pilah-quote">{activeRun.text}</p>
+                )}
                 <ul className="bars">
                   {activeRun.choices.map((choice) => (
                     <Bar

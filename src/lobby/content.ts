@@ -14,10 +14,10 @@ export const OWNER = {
 };
 
 export const LAB_SUBTITLE =
-  "Four live AI backends running behind one gateway, combining on-host ONNX and vector search with Jev, Gemini, and DeepSeek.";
+  "Four live AI backends running behind one gateway, combining vector search and fast decision routing with Jev, Gemini, and DeepSeek.";
 
 export const LAB_SPECS: { label: string; value: string }[] = [
   { label: "AI model", value: "Jev, Gemini, DeepSeek" },
-  { label: "On-host engine", value: "IndoPII ONNX, Typesense 27.1" },
+  { label: "On-host engine", value: "Typesense 27.1, FastAPI, Redis" },
   { label: "Runtime", value: "CPU VPS (Docker, Caddy)" },
 ];

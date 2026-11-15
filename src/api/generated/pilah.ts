@@ -34,6 +34,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/sort/images": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Sort Images */
+    post: operations["sort_images_v1_sort_images_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/triage": {
     parameters: {
       query?: never;
@@ -207,6 +224,39 @@ export interface components {
       /** Items */
       items: string[];
     };
+    /** ImageItemInput */
+    ImageItemInput: {
+      /** Name */
+      name?: string;
+      /**
+       * Mime Type
+       * @default image/jpeg
+       * @enum {string}
+       */
+      mime_type?: "image/jpeg" | "image/png" | "image/webp";
+      /** Data Base64 */
+      data_base64: string;
+    };
+    /** SortImagesRequest */
+    SortImagesRequest: {
+      /**
+       * Engine
+       * @default gemini
+       * @enum {string}
+       */
+      engine: "laya" | "jev" | "gemini";
+      /** Instructions */
+      instructions: string;
+      /** Choices */
+      choices: components["schemas"]["ChoiceOption"][];
+      /**
+       * Confidence Gate
+       * @default 0.7
+       */
+      confidence_gate: number;
+      /** Images */
+      images: components["schemas"]["ImageItemInput"][];
+    };
     /** SortResponse */
     SortResponse: {
       /** Engine */
@@ -345,6 +395,39 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["SortRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SortResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  sort_images_v1_sort_images_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SortImagesRequest"];
       };
     };
     responses: {

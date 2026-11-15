@@ -56,7 +56,7 @@ test("projects whose backend answers /health show On and link to their route", a
   const board = screen.getByRole("region", { name: "Projects" });
   const cardOrder = Array.from(board.querySelectorAll(".lb-card-title strong")).map((node) => node.textContent);
   expect(cardOrder).toEqual(["Tiketa", "Dispatch", "Lens", "Gatekeeper", "Ledger", "Footfall"]);
-  expect(within(projectCard("Gatekeeper")).getByText("IndoPII + Jev + DeepSeek")).toBeInTheDocument();
+  expect(within(projectCard("Gatekeeper")).getByText("Jev + Gemini Decision + DeepSeek")).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Contact" }));
   const dialog = screen.getByRole("dialog", { name: "Contact details" });
