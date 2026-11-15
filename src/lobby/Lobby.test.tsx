@@ -53,6 +53,10 @@ test("projects whose backend answers /health show On and link to their route", a
   expect(screen.getByText("Photo: Meta (V-JEPA 2 Research)")).toBeInTheDocument();
   expect(screen.getByText("AI model")).toBeInTheDocument();
   expect(screen.getByText("4 of 4 on")).toBeInTheDocument();
+  const board = screen.getByRole("region", { name: "Projects" });
+  const cardOrder = Array.from(board.querySelectorAll(".lb-card-title strong")).map((node) => node.textContent);
+  expect(cardOrder).toEqual(["Tiketa", "Dispatch", "Lens", "Gatekeeper", "Ledger", "Footfall"]);
+  expect(within(projectCard("Gatekeeper")).getByText("IndoPII + Jev + DeepSeek")).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Contact" }));
   const dialog = screen.getByRole("dialog", { name: "Contact details" });
