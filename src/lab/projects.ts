@@ -1,6 +1,6 @@
 import projectList from "./projects.json";
 
-export type ProjectStatus = "built" | "planned";
+export type ProjectStatus = "built" | "maintenance" | "planned";
 
 export interface Project {
   id: string;

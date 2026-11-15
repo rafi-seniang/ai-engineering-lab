@@ -161,7 +161,10 @@ export function GatekeeperConsole() {
     <AppShell
       product="Gatekeeper"
       mark={<Mark size={20} />}
-      scope={{ line: "LLM gateway", detail: "Port 8020, local models" }}
+      scope={{
+        line: "LLM gateway",
+        detail: meta.data ? `Port 8020 · ${meta.data.engine}` : "Port 8020 · IndoPII + Jev",
+      }}
       nav={[{ label: "Gate", to: "/gatekeeper", icon: GATE_ICON, current: true }]}
     >
       <div className="title-row">

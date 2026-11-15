@@ -1,8 +1,8 @@
 import { useQueries } from "@tanstack/react-query";
 import { backendUrl, hasAddress, PROJECTS, type Project } from "./projects";
 
-/** live: /health answered. offline: built but not answering. planned: no backend yet. checking: first call pending. */
-export type ServiceStatus = "live" | "offline" | "planned" | "checking";
+/** live: /health answered. offline: built but not answering. maintenance: paused/in redesign. planned: no backend yet. checking: first call pending. */
+export type ServiceStatus = "live" | "offline" | "maintenance" | "planned" | "checking";
 
 const POLL_MILLISECONDS = 10_000;
 const HEALTH_TIMEOUT_MILLISECONDS = 2_500;
@@ -31,7 +31,7 @@ export function useServiceStatus(): Record<string, ServiceStatus> {
     })),
   });
   const statusById: Record<string, ServiceStatus> = Object.fromEntries(
-    PROJECTS.map((project) => [project.id, "planned"]),
+    PROJECTS.map((project) => [project.id, project.status === "maintenance" ? "maintenance" : "planned"]),
   );
   builtProjects.forEach((project, index) => {
     const answered = results[index]?.data;
@@ -43,6 +43,7 @@ export function useServiceStatus(): Record<string, ServiceStatus> {
 export const STATUS_WORDS: Record<ServiceStatus, string> = {
   live: "On",
   offline: "Off",
-  planned: "Off",
+  maintenance: "In Maintenance",
+  planned: "In Maintenance",
   checking: "Checking",
 };

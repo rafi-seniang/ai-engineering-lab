@@ -36,16 +36,20 @@ test("projects whose backend answers /health show On and link to their route", a
 
   await vi.waitFor(() => {
     expect(within(projectCard("Dispatch")).getByText("On")).toBeInTheDocument();
+    expect(within(projectCard("Gatekeeper")).getByText("On")).toBeInTheDocument();
     expect(within(projectCard("Lens")).getByText("On")).toBeInTheDocument();
-    expect(within(projectCard("Footfall")).getByText("Off")).toBeInTheDocument();
+    expect(within(projectCard("Tiketa")).getByText("On")).toBeInTheDocument();
+    expect(within(projectCard("Ledger")).getByText("In Maintenance")).toBeInTheDocument();
+    expect(within(projectCard("Footfall")).getByText("In Maintenance")).toBeInTheDocument();
   });
   expect(projectCard("Dispatch").tagName).toBe("A");
+  expect(projectCard("Ledger").tagName).toBe("DIV");
+  expect(projectCard("Ledger")).toHaveAttribute("aria-disabled", "true");
   expect(projectCard("Footfall").tagName).toBe("DIV");
   expect(projectCard("Footfall")).toHaveAttribute("aria-disabled", "true");
-  expect(within(projectCard("Tiketa")).getByText("On")).toBeInTheDocument();
   expect(projectCard("Tiketa")).toHaveAttribute("href", "http://localhost:5174"); // its own site, not a screen here
   expect(within(projectCard("Tiketa")).getByText("Open site")).toBeInTheDocument();
-  expect(screen.getByText("5 of 6 on")).toBeInTheDocument();
+  expect(screen.getByText("4 of 4 on")).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Contact" }));
   const dialog = screen.getByRole("dialog", { name: "Contact details" });
