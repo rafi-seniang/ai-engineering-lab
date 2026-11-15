@@ -40,6 +40,7 @@ function ProjectCardBody({ project, status }: { project: Project; status: Servic
 export function Lobby() {
   const statusById = useServiceStatus();
   const [contactOpen, setContactOpen] = useState(false);
+  const builtCount = PROJECTS.filter((project) => project.status === "built").length;
   const liveCount = PROJECTS.filter((project) => statusById[project.id] === "live").length;
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export function Lobby() {
           </button>
           <span className="lb-online-pill" aria-live="polite">
             <i aria-hidden="true" />
-            {liveCount} of {PROJECTS.length} on
+            {liveCount} of {builtCount} on
           </span>
         </nav>
       </header>

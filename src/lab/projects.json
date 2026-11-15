@@ -36,18 +36,6 @@
     "caption": "Multimodal vector search in Typesense"
   },
   {
-    "id": "ledger",
-    "name": "Ledger",
-    "port": 8040,
-    "status": "built",
-    "group": "Documents",
-    "engine": "DeepSeek Vision",
-    "route": "/ledger",
-    "summary": "Reads supplier invoices with a vision model, verifies every sum in code, matches bank debits.",
-    "picture": "ledger-account-book-1766",
-    "caption": "Invoice extraction and bank reconciliation"
-  },
-  {
     "id": "tiketa",
     "name": "Tiketa",
     "port": 8070,
@@ -60,10 +48,22 @@
     "caption": "Cinema booking with a chat agent and MCP as add-ons"
   },
   {
+    "id": "ledger",
+    "name": "Ledger",
+    "port": 8040,
+    "status": "maintenance",
+    "group": "Documents",
+    "engine": "DeepSeek Vision",
+    "route": "/ledger",
+    "summary": "Reads supplier invoices with a vision model, verifies every sum in code, matches bank debits.",
+    "picture": "ledger-account-book-1766",
+    "caption": "Invoice extraction and bank reconciliation"
+  },
+  {
     "id": "footfall",
     "name": "Footfall",
     "port": 8050,
-    "status": "planned",
+    "status": "maintenance",
     "group": "Search and vision",
     "engine": "RT-DETR v2 + ByteTrack",
     "route": "/footfall",
