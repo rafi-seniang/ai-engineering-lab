@@ -226,7 +226,7 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
           });
         }
         return jsonResponse({
-          query: "anjing",
+          query: "surfing",
           mode: "picture",
           took_ms: 42.1,
           hits: [{ photograph: dog, score: 0.78, in_caption: false }],
@@ -264,7 +264,7 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
   );
 
   renderAt("/lens", <LensSearch />);
-  expect(await screen.findByText(/1 photographs for “anjing”\. None names it in its caption/)).toBeInTheDocument();
+  expect(await screen.findByText(/1 photographs for “surfing”\. None names it in its caption/)).toBeInTheDocument();
   expect(screen.getByText(/gemini-embedding-2 · 271 archive/)).toBeInTheDocument();
   expect(screen.getByText(/Picture searches and uploads use Google AI Studio's free tier/)).toBeInTheDocument();
   expect(searchUrls[0]).toContain("mode=picture");
