@@ -134,6 +134,8 @@ export interface components {
        * @constant
        */
       stream: false;
+      /** Scope */
+      scope?: string | null;
     } & {
       [key: string]: unknown;
     };
@@ -144,6 +146,8 @@ export interface components {
     CheckRequest: {
       /** Messages */
       messages: components["schemas"]["ChatMessage"][];
+      /** Scope */
+      scope?: string | null;
     };
     /**
      * GateDecision
@@ -152,8 +156,14 @@ export interface components {
     GateDecision: {
       /** Injection Probability */
       injection_probability: number;
+      /** Off Topic Probability */
+      off_topic_probability?: number;
+      /** Tool Result Probability */
+      tool_result_probability?: number | null;
       /** Blocked */
       blocked: boolean;
+      /** Blocked By */
+      blocked_by?: ("injection" | "off_topic" | "tool_result" | "tool_call") | null;
       /** Route */
       route: ("small" | "strong") | null;
       /** Difficulty */
@@ -174,12 +184,16 @@ export interface components {
        * @enum {string}
        */
       outcome: "answered" | "cached" | "blocked" | "failed";
+      /** Blocked By */
+      blocked_by?: ("injection" | "off_topic" | "tool_result" | "tool_call") | null;
       /** Route */
       route: ("small" | "strong") | null;
       /** Model */
       model: string | null;
       /** Injection Probability */
       injection_probability: number | null;
+      /** Off Topic Probability */
+      off_topic_probability?: number | null;
       /** Difficulty */
       difficulty: number | null;
       /** Masked Identifiers */
@@ -205,6 +219,8 @@ export interface components {
       cached: number;
       /** Blocked */
       blocked: number;
+      /** Off Topic Blocked */
+      off_topic_blocked?: number;
       /** Failed */
       failed: number;
       /** Small Routed */

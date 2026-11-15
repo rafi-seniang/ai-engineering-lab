@@ -15,6 +15,8 @@ interface AppShellProps {
   mark: ReactNode;
   scope: { line: string; detail: string };
   nav: NavItem[];
+  /** Controls under the navigation, such as a screen's modes */
+  sidebar?: ReactNode;
   sidebarFooter?: ReactNode;
   topbar?: ReactNode;
   className?: string;
@@ -29,7 +31,17 @@ const BACK_ICON = (
 );
 
 /** The frame every project screen sits in: the tinted L of sidebar and top bar, and the white sheet. */
-export function AppShell({ product, mark, scope, nav, sidebarFooter, topbar, className, children }: AppShellProps) {
+export function AppShell({
+  product,
+  mark,
+  scope,
+  nav,
+  sidebar,
+  sidebarFooter,
+  topbar,
+  className,
+  children,
+}: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className={`app-shell${className ? ` ${className}` : ""}`}>
@@ -68,6 +80,7 @@ export function AppShell({ product, mark, scope, nav, sidebarFooter, topbar, cla
               {item.count ? <span className="count">{item.count}</span> : null}
             </Link>
           ))}
+          {sidebar}
           {sidebarFooter && <div className="bottom">{sidebarFooter}</div>}
         </aside>
 

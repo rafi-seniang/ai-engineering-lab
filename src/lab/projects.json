@@ -41,9 +41,9 @@
     "port": 8020,
     "status": "built",
     "group": "Language",
-    "engine": "IndoPII + Jev + DeepSeek",
+    "engine": "Jev + Gemini Decision + DeepSeek",
     "route": "/gatekeeper",
-    "summary": "LLM security gateway: masks personal data locally, then blocks prompt injection and malicious tool results.",
+    "summary": "Bilingual (EN/ID) LLM security gateway: blocks prompt injection, out-of-topic requests, and malicious tool results.",
     "picture": "gatekeeper-toll-gate-1900",
     "caption": "LLM security gateway"
   },

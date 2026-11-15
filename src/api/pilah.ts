@@ -10,6 +10,8 @@ export const pilah = createClient<paths>({
 
 export type ChoiceOption = components["schemas"]["ChoiceOption"];
 export type EngineOption = components["schemas"]["EngineOption"];
+export type ImageItemInput = components["schemas"]["ImageItemInput"];
+export type SortImagesRequest = components["schemas"]["SortImagesRequest"];
 export type SortRequest = components["schemas"]["SortRequest"];
 export type SortedItem = components["schemas"]["SortedItem"];
 export type SortResponse = components["schemas"]["SortResponse"];
