@@ -17,6 +17,14 @@ interface EditableChoice extends ChoiceOption {
 
 type InputMode = "text" | "images";
 
+interface TextItem {
+  id: string;
+  text: string;
+}
+
+// The same batch size for texts and pictures
+const MAX_BATCH = 10;
+
 interface RulePreset {
   id: string;
   name: string;
@@ -37,7 +45,7 @@ interface ImageRulePreset {
 interface QueuedImage {
   id: string;
   name: string;
-  mimeType: "image/jpeg" | "image/png" | "image/webp";
+  mimeType: "image/jpeg" | "image/png";
   dataBase64: string;
   previewUrl: string;
 }
@@ -227,9 +235,8 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-function normalizeImageMime(mime: string): "image/jpeg" | "image/png" | "image/webp" {
-  if (mime === "image/png" || mime === "image/webp") return mime;
-  return "image/jpeg";
+function normalizeImageMime(mime: string): "image/jpeg" | "image/png" {
+  return mime === "image/png" ? mime : "image/jpeg";
 }
 
 async function prepareImageFile(file: File, index: number): Promise<QueuedImage> {
@@ -446,16 +453,25 @@ function validateRule(
   return { clean, problem: null };
 }
 
+// Laya reads text only. Jev and Gemini Decision read pictures too
+const readsImages = (engine: EngineId) => engine !== "laya";
+
+function samplesAsTexts(preset: RulePreset): TextItem[] {
+  return preset.samples
+    .slice(0, MAX_BATCH)
+    .map((sample, index) => ({ id: `${preset.id}-${index}`, text: sample.text }));
+}
+
 export function PilahInbox() {
   const [inputMode, setInputMode] = useState<InputMode>("text");
   const [presetId, setPresetId] = useState<string>(DEFAULT_PRESET.id);
   const [imagePresetId, setImagePresetId] = useState<string>(DEFAULT_IMAGE_PRESET.id);
-  const [sampleIndex, setSampleIndex] = useState<number>(0);
   const [selectedEngine, setSelectedEngine] = useState<EngineId>("jev");
   const [instructions, setInstructions] = useState<string>(DEFAULT_PRESET.instructions);
   const [confidenceGate, setConfidenceGate] = useState<number>(DEFAULT_PRESET.gate);
   const [choices, setChoices] = useState<EditableChoice[]>(() => toEditableChoices(DEFAULT_PRESET.choices));
-  const [draftText, setDraftText] = useState<string>(DEFAULT_PRESET.samples[0]?.text ?? "");
+  const [texts, setTexts] = useState<TextItem[]>(() => samplesAsTexts(DEFAULT_PRESET));
+  const [textResultsById, setTextResultsById] = useState<Record<string, SortRun>>({});
   const [queuedImages, setQueuedImages] = useState<QueuedImage[]>([]);
   const [imageResultsById, setImageResultsById] = useState<Record<string, SortRun>>({});
   const [runs, setRuns] = useState<SortRun[]>([]);
@@ -475,7 +491,7 @@ export function PilahInbox() {
 
   const sortItems = useCallback(
     async (
-      items: string[],
+      items: TextItem[],
       rule: {
         engine: EngineId;
         instructions: string;
@@ -483,9 +499,11 @@ export function PilahInbox() {
         gate: number;
       },
     ) => {
-      const nonEmptyItems = items.map((item) => item.trim()).filter((item) => item.length > 0);
+      const nonEmptyItems = items
+        .map((item) => ({ ...item, text: item.text.trim() }))
+        .filter((item) => item.text.length > 0);
       if (nonEmptyItems.length === 0) {
-        setError("Enter a paragraph to sort.");
+        setError("Enter at least one text to sort.");
         return;
       }
       const { clean, problem } = validateRule(rule.instructions, rule.choices);
@@ -504,25 +522,30 @@ export function PilahInbox() {
               instructions: rule.instructions.trim(),
               choices: clean,
               confidence_gate: rule.gate,
-              items: nonEmptyItems,
+              items: nonEmptyItems.map((item) => item.text),
             },
           }),
         );
         const stamp = clockNow();
         const perItemLatency = response.latency_ms / Math.max(response.results.length, 1);
+        const nextMap: Record<string, SortRun> = {};
         const created: SortRun[] = response.results.map((result, index) => {
           const runNumber = nextCounter.current++;
-          return {
+          const item = nonEmptyItems[index];
+          const run: SortRun = {
             id: `run-${runNumber}`,
             at: stamp,
-            text: nonEmptyItems[index] ?? "",
+            text: item?.text ?? "",
             engine: response.engine,
             latencyMs: perItemLatency,
             gate: response.confidence_gate,
             choices: clean,
             result,
           };
+          if (item) nextMap[item.id] = run;
+          return run;
         });
+        setTextResultsById((previous) => ({ ...previous, ...nextMap }));
         setRuns((previous) => [...created, ...previous].slice(0, 24));
         if (created[0]) {
           setSelectedRunId(created[0].id);
@@ -542,34 +565,22 @@ export function PilahInbox() {
     const initialEngine =
       enginesQuery.data.default_engine ?? enginesQuery.data.engines.find((option) => option.available)?.id ?? "jev";
     setSelectedEngine(initialEngine);
-    const firstSample = DEFAULT_PRESET.samples[0]?.text;
-    if (firstSample) {
-      void sortItems([firstSample], {
-        engine: initialEngine,
-        instructions: DEFAULT_PRESET.instructions,
-        choices: toEditableChoices(DEFAULT_PRESET.choices),
-        gate: DEFAULT_PRESET.gate,
-      });
-    }
+    // One example answered on arrival, so the screen opens with a real prediction
+    void sortItems(samplesAsTexts(DEFAULT_PRESET).slice(0, 1), {
+      engine: initialEngine,
+      instructions: DEFAULT_PRESET.instructions,
+      choices: toEditableChoices(DEFAULT_PRESET.choices),
+      gate: DEFAULT_PRESET.gate,
+    });
   }, [enginesQuery.data, sortItems]);
 
   function applyPreset(preset: RulePreset) {
-    const nextChoices = toEditableChoices(preset.choices);
-    const firstSample = preset.samples[0]?.text ?? "";
     setPresetId(preset.id);
-    setSampleIndex(0);
     setInstructions(preset.instructions);
     setConfidenceGate(preset.gate);
-    setChoices(nextChoices);
-    setDraftText(firstSample);
-    if (firstSample) {
-      void sortItems([firstSample], {
-        engine: selectedEngine,
-        instructions: preset.instructions,
-        choices: nextChoices,
-        gate: preset.gate,
-      });
-    }
+    setChoices(toEditableChoices(preset.choices));
+    setTexts(samplesAsTexts(preset));
+    setTextResultsById({});
   }
 
   function applyImagePreset(preset: ImageRulePreset) {
@@ -580,7 +591,10 @@ export function PilahInbox() {
   }
 
   const sortImages = useCallback(
-    async (images: QueuedImage[], rule: { instructions: string; choices: EditableChoice[]; gate: number }) => {
+    async (
+      images: QueuedImage[],
+      rule: { engine: EngineId; instructions: string; choices: EditableChoice[]; gate: number },
+    ) => {
       if (images.length === 0) {
         setError("Add between 1 and 10 images to classify.");
         return;
@@ -601,7 +615,7 @@ export function PilahInbox() {
         const response = unwrap(
           await pilah.POST("/v1/sort/images", {
             body: {
-              engine: "gemini",
+              engine: rule.engine,
               instructions: rule.instructions.trim(),
               choices: clean,
               confidence_gate: rule.gate,
@@ -646,10 +660,10 @@ export function PilahInbox() {
   function switchInputMode(nextMode: InputMode) {
     setInputMode(nextMode);
     setError(null);
+    if (nextMode === "images" && !readsImages(selectedEngine)) {
+      setSelectedEngine(engines.find((option) => option.available && readsImages(option.id))?.id ?? "jev");
+    }
     if (nextMode === "images") {
-      if (engines.some((option) => option.id === "gemini" && option.available)) {
-        setSelectedEngine("gemini");
-      }
       if (instructions === DEFAULT_PRESET.instructions) {
         applyImagePreset(DEFAULT_IMAGE_PRESET);
       }
@@ -660,10 +674,10 @@ export function PilahInbox() {
     const picked = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (picked.length === 0) return;
-    const remainingSlots = Math.max(0, 10 - queuedImages.length);
+    const remainingSlots = Math.max(0, MAX_BATCH - queuedImages.length);
     const slice = picked.slice(0, remainingSlots);
     const prepared = await Promise.all(slice.map((file, idx) => prepareImageFile(file, idx)));
-    setQueuedImages((prev) => [...prev, ...prepared].slice(0, 10));
+    setQueuedImages((prev) => [...prev, ...prepared].slice(0, MAX_BATCH));
     if (picked.length > remainingSlots) {
       setError("Up to 10 images can be queued in one batch.");
     } else {
@@ -682,17 +696,17 @@ export function PilahInbox() {
     setQueuedImages((prev) => prev.filter((img) => img.id !== id));
   }
 
-  function applySample(index: number) {
-    const sample = activePreset.samples[index];
-    if (!sample) return;
-    setSampleIndex(index);
-    setDraftText(sample.text);
-    void sortItems([sample.text], {
-      engine: selectedEngine,
-      instructions,
-      choices,
-      gate: confidenceGate,
-    });
+  function updateText(id: string, text: string) {
+    setTexts((previous) => previous.map((item) => (item.id === id ? { ...item, text } : item)));
+  }
+
+  function addText() {
+    if (texts.length >= MAX_BATCH) return;
+    setTexts((previous) => [...previous, { id: `text-${nextCounter.current++}`, text: "" }]);
+  }
+
+  function removeText(id: string) {
+    setTexts((previous) => (previous.length <= 1 ? previous : previous.filter((item) => item.id !== id)));
   }
 
   function updateChoice(key: string, field: "label" | "description", value: string) {
@@ -717,27 +731,15 @@ export function PilahInbox() {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (inputMode === "images") {
-      void sortImages(queuedImages, { instructions, choices, gate: confidenceGate });
+      void sortImages(queuedImages, { engine: selectedEngine, instructions, choices, gate: confidenceGate });
       return;
     }
-    void sortItems([draftText], {
+    void sortItems(texts, {
       engine: selectedEngine,
       instructions,
       choices,
       gate: confidenceGate,
     });
-  }
-
-  function handleRunSamples() {
-    void sortItems(
-      activePreset.samples.map((sample) => sample.text),
-      {
-        engine: selectedEngine,
-        instructions,
-        choices,
-        gate: confidenceGate,
-      },
-    );
   }
 
   const activeRun = runs.find((run) => run.id === selectedRunId) ?? runs[0];
@@ -755,43 +757,51 @@ export function PilahInbox() {
       nav={[
         { label: "System 1 model", to: "/dispatch", icon: MODEL_ICON, count: runs.length || undefined, current: true },
       ]}
+      sidebar={
+        <>
+          <fieldset className="side-group">
+            <legend>Input</legend>
+            {(["text", "images"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className="nav-item"
+                aria-pressed={inputMode === mode}
+                onClick={() => switchInputMode(mode)}
+              >
+                {mode === "text" ? "Text" : "Images"}
+                <small>1 to {MAX_BATCH}</small>
+              </button>
+            ))}
+          </fieldset>
+          <fieldset className="side-group">
+            <legend>Model</legend>
+            {engines.map((engineOption) => {
+              const textOnly = inputMode === "images" && !readsImages(engineOption.id);
+              return (
+                <button
+                  key={engineOption.id}
+                  type="button"
+                  className="nav-item"
+                  aria-pressed={selectedEngine === engineOption.id}
+                  disabled={!engineOption.available || textOnly}
+                  title={textOnly ? `${engineOption.name} reads text only` : engineOption.detail}
+                  onClick={() => setSelectedEngine(engineOption.id)}
+                >
+                  {engineOption.name}
+                  {!engineOption.available && <small>{engineOption.status_label}</small>}
+                  {engineOption.available && textOnly && <small>Text only</small>}
+                </button>
+              );
+            })}
+          </fieldset>
+        </>
+      }
     >
       <div className="title-row">
         <div>
           <h1>System 1 Model</h1>
           <p className="sub">{subtitle}</p>
-        </div>
-        <div className="title-actions">
-          <fieldset className="segmented pilah-engines" aria-label="Input mode">
-            <legend className="visually-hidden">Input mode</legend>
-            <button type="button" aria-pressed={inputMode === "text"} onClick={() => switchInputMode("text")}>
-              Text
-            </button>
-            <button type="button" aria-pressed={inputMode === "images"} onClick={() => switchInputMode("images")}>
-              Images (1–10)
-            </button>
-          </fieldset>
-          <fieldset className="segmented pilah-engines" aria-label="System 1 model">
-            <legend className="visually-hidden">System 1 model</legend>
-            {engines.map((engineOption) => (
-              <button
-                key={engineOption.id}
-                type="button"
-                aria-pressed={selectedEngine === engineOption.id}
-                disabled={!engineOption.available || (inputMode === "images" && engineOption.id !== "gemini")}
-                title={
-                  inputMode === "images" && engineOption.id !== "gemini"
-                    ? "Image decisions require Gemini Decision"
-                    : engineOption.detail
-                }
-                onClick={() => {
-                  if (engineOption.available) setSelectedEngine(engineOption.id);
-                }}
-              >
-                {engineOption.available ? engineOption.name : `${engineOption.name} · ${engineOption.status_label}`}
-              </button>
-            ))}
-          </fieldset>
         </div>
       </div>
 
@@ -921,23 +931,16 @@ export function PilahInbox() {
             aria-label={inputMode === "images" ? "Test images" : "Test paragraph"}
           >
             <header>
-              <h2>{inputMode === "images" ? "Test images (1 to 10)" : "Test input"}</h2>
+              <h2>{inputMode === "images" ? `Test images (1 to ${MAX_BATCH})` : `Test texts (1 to ${MAX_BATCH})`}</h2>
               {inputMode === "text" ? (
-                <label className="pilah-select-wrap">
-                  <span>Sample</span>
-                  <select
-                    className="input pilah-select"
-                    aria-label="Sample input"
-                    value={sampleIndex}
-                    onChange={(event) => applySample(Number(event.target.value))}
-                  >
-                    {activePreset.samples.map((sample, index) => (
-                      <option key={sample.label} value={index}>
-                        {sample.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="pilah-image-toolbar">
+                  <button type="button" className="btn" onClick={() => applyPreset(activePreset)}>
+                    Load {Math.min(activePreset.samples.length, MAX_BATCH)} samples
+                  </button>
+                  <button type="button" className="btn" disabled={texts.length >= MAX_BATCH} onClick={addText}>
+                    Add text
+                  </button>
+                </div>
               ) : (
                 <div className="pilah-image-toolbar">
                   <button type="button" className="btn" onClick={() => void handleLoadSampleImages()}>
@@ -947,7 +950,7 @@ export function PilahInbox() {
                     Choose images
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/jpeg,image/png"
                       multiple
                       className="visually-hidden"
                       aria-label="Choose images to classify"
@@ -959,19 +962,48 @@ export function PilahInbox() {
             </header>
 
             {inputMode === "text" ? (
-              <textarea
-                id="pilah-input"
-                className="pilah-textarea"
-                aria-label="Paragraph to sort"
-                rows={3}
-                maxLength={4000}
-                placeholder="Write or paste a paragraph in English or Indonesian..."
-                value={draftText}
-                onChange={(event) => setDraftText(event.target.value)}
-              />
+              <ul className="pilah-text-list" aria-label="Texts to sort">
+                {texts.map((item, index) => {
+                  const run = textResultsById[item.id];
+                  return (
+                    <li key={item.id} className={run && activeRun?.id === run.id ? "is-selected" : undefined}>
+                      <textarea
+                        className="pilah-textarea"
+                        aria-label={`Text ${index + 1}`}
+                        rows={2}
+                        maxLength={4000}
+                        placeholder="Write or paste a text in English or Indonesian..."
+                        value={item.text}
+                        onChange={(event) => updateText(item.id, event.target.value)}
+                        onFocus={() => {
+                          if (run) setSelectedRunId(run.id);
+                        }}
+                      />
+                      <div className="pilah-text-side">
+                        {run && (
+                          <button type="button" className="pill-button" onClick={() => setSelectedRunId(run.id)}>
+                            <span className={`pill ${run.result.passed_gate ? "pos" : "warn"}`}>
+                              {run.result.choice} · {probability(run.result.top_probability)}
+                            </span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          disabled={texts.length <= 1}
+                          aria-label={`Remove text ${index + 1}`}
+                          onClick={() => removeText(item.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             ) : queuedImages.length === 0 ? (
               <div className="pilah-image-empty">
-                <p>Upload 1 to 10 images (JPEG, PNG, WebP) or load 3 sample images to classify into A, B, C...</p>
+                <p>Upload 1 to {MAX_BATCH} images (JPEG or PNG) or load 3 sample images to classify into A, B, C...</p>
               </div>
             ) : (
               <ul className="pilah-image-grid" aria-label="Queued images">
@@ -1011,20 +1043,17 @@ export function PilahInbox() {
 
             <div className="pilah-actions">
               {inputMode === "text" ? (
-                <>
-                  <button type="submit" className="btn primary" disabled={sorting}>
-                    {sorting ? "Sorting..." : `Sort with ${selectedEngineName}`}
-                  </button>
-                  <button type="button" className="btn" disabled={sorting} onClick={handleRunSamples}>
-                    Sort {activePreset.samples.length} samples
-                  </button>
-                </>
+                <button type="submit" className="btn primary" disabled={sorting}>
+                  {sorting
+                    ? "Sorting..."
+                    : `Sort ${texts.length} ${texts.length === 1 ? "text" : "texts"} with ${selectedEngineName}`}
+                </button>
               ) : (
                 <>
                   <button type="submit" className="btn primary" disabled={sorting || queuedImages.length === 0}>
                     {sorting
                       ? "Sorting..."
-                      : `Sort ${queuedImages.length || ""} ${queuedImages.length === 1 ? "image" : "images"}`}
+                      : `Sort ${queuedImages.length || ""} ${queuedImages.length === 1 ? "image" : "images"} with ${selectedEngineName}`}
                   </button>
                   {queuedImages.length > 0 && (
                     <button
@@ -1047,7 +1076,7 @@ export function PilahInbox() {
                 </span>
               )}
             </div>
-            {(selectedEngine === "gemini" || inputMode === "images") && (
+            {selectedEngine === "gemini" && (
               <p className="hint">
                 Note: Gemini runs on Google AI Studio's free tier (3-key rotation), so submitted inputs are sent to
                 Google.
@@ -1124,10 +1153,7 @@ export function PilahInbox() {
                       type="button"
                       className="pilah-run-row"
                       aria-current={activeRun?.id === run.id}
-                      onClick={() => {
-                        setSelectedRunId(run.id);
-                        setDraftText(run.text);
-                      }}
+                      onClick={() => setSelectedRunId(run.id)}
                     >
                       <span className="pilah-run-text">{run.text}</span>
                       <span className="pilah-run-right">

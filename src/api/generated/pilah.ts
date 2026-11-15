@@ -184,6 +184,22 @@ export interface components {
       /** Detail */
       detail?: components["schemas"]["ValidationError"][];
     };
+    /** ImageItemInput */
+    ImageItemInput: {
+      /**
+       * Name
+       * @default image
+       */
+      name: string;
+      /**
+       * Mime Type
+       * @default image/jpeg
+       * @enum {string}
+       */
+      mime_type: "image/jpeg" | "image/png";
+      /** Data Base64 */
+      data_base64: string;
+    };
     /**
      * ServiceMeta
      * @description What the lab frontend's lobby shows about this backend (the Lab backend contract).
@@ -204,6 +220,26 @@ export interface components {
       /** Docs Path */
       docs_path: string;
     };
+    /** SortImagesRequest */
+    SortImagesRequest: {
+      /**
+       * Engine
+       * @default jev
+       * @enum {string}
+       */
+      engine: "laya" | "jev" | "gemini";
+      /** Instructions */
+      instructions: string;
+      /** Choices */
+      choices: components["schemas"]["ChoiceOption"][];
+      /**
+       * Confidence Gate
+       * @default 0.7
+       */
+      confidence_gate: number;
+      /** Images */
+      images: components["schemas"]["ImageItemInput"][];
+    };
     /** SortRequest */
     SortRequest: {
       /**
@@ -223,39 +259,6 @@ export interface components {
       confidence_gate: number;
       /** Items */
       items: string[];
-    };
-    /** ImageItemInput */
-    ImageItemInput: {
-      /** Name */
-      name?: string;
-      /**
-       * Mime Type
-       * @default image/jpeg
-       * @enum {string}
-       */
-      mime_type?: "image/jpeg" | "image/png" | "image/webp";
-      /** Data Base64 */
-      data_base64: string;
-    };
-    /** SortImagesRequest */
-    SortImagesRequest: {
-      /**
-       * Engine
-       * @default gemini
-       * @enum {string}
-       */
-      engine: "laya" | "jev" | "gemini";
-      /** Instructions */
-      instructions: string;
-      /** Choices */
-      choices: components["schemas"]["ChoiceOption"][];
-      /**
-       * Confidence Gate
-       * @default 0.7
-       */
-      confidence_gate: number;
-      /** Images */
-      images: components["schemas"]["ImageItemInput"][];
     };
     /** SortResponse */
     SortResponse: {
