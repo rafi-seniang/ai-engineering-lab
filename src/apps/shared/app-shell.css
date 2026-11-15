@@ -151,6 +151,40 @@ table,
   background: var(--active);
   color: var(--text);
 }
+/* A screen's modes in the sidebar: a small label over buttons that look like navigation */
+.side-group {
+  display: grid;
+  gap: 2px;
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+}
+.side-group legend {
+  padding: 0 8px 4px;
+  font-size: var(--fs-small);
+  color: var(--faint);
+}
+.side-group button.nav-item {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.side-group button.nav-item[aria-pressed="true"] {
+  background: var(--active);
+  color: var(--text);
+}
+.side-group button.nav-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.side-group .nav-item small {
+  margin-left: auto;
+  font-size: var(--fs-small);
+  color: var(--faint);
+}
 .sidebar .bottom {
   margin-top: auto;
 }

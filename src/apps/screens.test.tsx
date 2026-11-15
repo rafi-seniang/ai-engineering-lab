@@ -114,7 +114,7 @@ test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches a
   expect(screen.getByRole("link", { name: "Back to lobby" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "System 1 Model" })).toBeInTheDocument();
   expect(screen.getByLabelText("Rule preset")).toBeInTheDocument();
-  expect(screen.getByLabelText("Sample input")).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Text 1" })).toBeInTheDocument();
   expect(screen.getByText("Below 0.70 means low confidence and needs a human judge.")).toBeInTheDocument();
 
   const jevButton = await screen.findByRole("button", { name: "Jev" });
@@ -134,10 +134,13 @@ test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches a
   await userEvent.click(geminiButton);
   expect(screen.getByText(/Google AI Studio's free tier/)).toBeInTheDocument();
 
-  const paragraphBox = screen.getByRole("textbox", { name: "Paragraph to sort" });
+  // The preset's samples fill the batch. Keep one text and write it anew
+  await userEvent.click(screen.getByRole("button", { name: "Remove text 3" }));
+  await userEvent.click(screen.getByRole("button", { name: "Remove text 2" }));
+  const paragraphBox = screen.getByRole("textbox", { name: "Text 1" });
   await userEvent.clear(paragraphBox);
   await userEvent.type(paragraphBox, "Cleaned dust filters on the open GPU rig.");
-  await userEvent.click(screen.getByRole("button", { name: "Sort with Gemini" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sort 1 text with Gemini" }));
 
   await vi.waitFor(() => {
     expect(sortCalls.length).toBeGreaterThanOrEqual(2);
@@ -152,14 +155,14 @@ test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches a
 
   await userEvent.click(screen.getByRole("button", { name: "Laya" }));
   expect(screen.queryByText(/Google AI Studio's free tier/)).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Sort with Laya" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sort 1 text with Laya" }));
   await vi.waitFor(() => {
     expect(sortCalls[sortCalls.length - 1]?.engine).toBe("laya");
   });
   expect(await within(predictionPanel).findByText("english")).toBeInTheDocument();
 });
 
-test("Dispatch switches to Images (1-10) mode and classifies uploaded images via Gemini", async () => {
+test("Dispatch sorts a batch of uploaded images with Jev, chosen in the sidebar", async () => {
   const imageCalls: Array<{
     engine: string;
     instructions: string;
@@ -232,7 +235,7 @@ test("Dispatch switches to Images (1-10) mode and classifies uploaded images via
   );
 
   renderAt("/dispatch", <PilahInbox />);
-  await userEvent.click(await screen.findByRole("button", { name: "Images (1–10)" }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Images/ }));
   const fileInput = screen.getByLabelText("Choose images to classify");
   const img1 = new File([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])], "tower.jpg", {
     type: "image/jpeg",
@@ -241,12 +244,12 @@ test("Dispatch switches to Images (1-10) mode and classifies uploaded images via
     type: "image/png",
   });
   await userEvent.upload(fileInput, [img1, img2]);
-  await userEvent.click(await screen.findByRole("button", { name: "Sort 2 images" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Sort 2 images with Jev" }));
 
   await vi.waitFor(() => {
     expect(imageCalls).toHaveLength(1);
   });
-  expect(imageCalls[0]?.engine).toBe("gemini");
+  expect(imageCalls[0]?.engine).toBe("jev");
   expect(imageCalls[0]?.images.map((item) => item.name)).toEqual(["tower.jpg", "surf.png"]);
   const grid = screen.getByRole("list", { name: "Queued images" });
   expect(within(grid).getByText("A · 0.95")).toBeInTheDocument();
