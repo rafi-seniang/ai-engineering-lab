@@ -1,5 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
-import { backendUrl, PROJECTS, type Project } from "./projects";
+import { backendUrl, hasAddress, PROJECTS, type Project } from "./projects";
 
 /** live: /health answered. offline: built but not answering. planned: no backend yet. checking: first call pending. */
 export type ServiceStatus = "live" | "offline" | "planned" | "checking";
@@ -8,6 +8,7 @@ const POLL_MILLISECONDS = 10_000;
 const HEALTH_TIMEOUT_MILLISECONDS = 2_500;
 
 async function isAnswering(project: Project): Promise<boolean> {
+  if (!hasAddress(project)) return false; // not deployed with this site
   try {
     const response = await fetch(`${backendUrl(project)}/health`, {
       signal: AbortSignal.timeout(HEALTH_TIMEOUT_MILLISECONDS),
