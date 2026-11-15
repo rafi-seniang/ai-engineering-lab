@@ -323,7 +323,7 @@ export function PilahInbox() {
           setSelectedRunId(created[0].id);
         }
       } catch (failure) {
-        setError(failure instanceof Error ? failure.message : "Dispatch did not answer on port 8010.");
+        setError(failure instanceof Error ? failure.message : "Dispatch did not answer.");
       } finally {
         setSorting(false);
       }

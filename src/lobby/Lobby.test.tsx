@@ -49,6 +49,9 @@ test("projects whose backend answers /health show On and link to their route", a
   expect(projectCard("Footfall")).toHaveAttribute("aria-disabled", "true");
   expect(projectCard("Tiketa")).toHaveAttribute("href", "http://localhost:5174"); // its own site, not a screen here
   expect(within(projectCard("Tiketa")).getByText("Open site")).toBeInTheDocument();
+  expect(within(projectCard("Dispatch")).queryByText(":8010")).not.toBeInTheDocument();
+  expect(screen.getByText("Photo: Meta (V-JEPA 2 Research)")).toBeInTheDocument();
+  expect(screen.getByText("AI model")).toBeInTheDocument();
   expect(screen.getByText("4 of 4 on")).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Contact" }));

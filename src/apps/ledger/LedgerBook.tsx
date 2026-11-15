@@ -254,7 +254,7 @@ export function LedgerBook() {
   const offline = invoices.isError && meta.isError;
 
   let finding = "Reading the ledger.";
-  if (offline) finding = "Ledger is not running on port 8040.";
+  if (offline) finding = "Ledger is not responding.";
   else if (invoices.data && reads.length === 0)
     finding = "No invoices yet. Read one, or run the eval to load the sample month.";
   else if (invoices.data && book) {
