@@ -139,7 +139,7 @@ export interface components {
        * Id
        * @enum {string}
        */
-      id: "laya" | "jev";
+      id: "laya" | "jev" | "gemini";
       /** Name */
       name: string;
       /** Provider */
@@ -153,6 +153,12 @@ export interface components {
     };
     /** EnginesResponse */
     EnginesResponse: {
+      /**
+       * Default Engine
+       * @default jev
+       * @enum {string}
+       */
+      default_engine: "laya" | "jev" | "gemini";
       /** Engines */
       engines: components["schemas"]["EngineOption"][];
     };
@@ -188,7 +194,7 @@ export interface components {
        * @default laya
        * @enum {string}
        */
-      engine: "laya" | "jev";
+      engine: "laya" | "jev" | "gemini";
       /** Instructions */
       instructions: string;
       /** Choices */

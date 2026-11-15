@@ -26,7 +26,7 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on Jev", async () => {
+test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches across engines", async () => {
   const sortCalls: Array<{
     engine: string;
     instructions: string;
@@ -43,6 +43,7 @@ test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on 
       }
       if (url.endsWith("/v1/engines")) {
         return jsonResponse({
+          default_engine: "jev",
           engines: [
             {
               id: "laya",
@@ -58,7 +59,15 @@ test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on 
               provider: "TypeSafe AI (hosted System One API)",
               available: true,
               status_label: "Active",
-              detail: "jev-latest through api.typesafe.ai.",
+              detail: "jev-1.14.0 through api.typesafe.ai.",
+            },
+            {
+              id: "gemini",
+              name: "Gemini",
+              provider: "Google AI Studio (free tier)",
+              available: true,
+              status_label: "Active",
+              detail: "gemini-decision-1 through Google AI Studio.",
             },
           ],
         });
@@ -81,6 +90,8 @@ test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on 
             label === chosen ? 0.84 : Number((0.16 / Math.max(labels.length - 1, 1)).toFixed(2)),
           ]),
         );
+        const checkpoint =
+          parsed.engine === "jev" ? "jev-1.14.0" : parsed.engine === "gemini" ? "gemini-decision-1" : "english";
         return jsonResponse({
           engine: parsed.engine,
           latency_ms: 19.4,
@@ -89,7 +100,7 @@ test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on 
             choice: chosen,
             probabilities,
             top_probability: 0.84,
-            checkpoint: parsed.engine === "jev" ? "jev-1.14.0" : "english",
+            checkpoint,
             passed_gate: 0.84 >= parsed.confidence_gate,
           })),
         });
@@ -107,20 +118,26 @@ test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on 
   expect(screen.getByText("Below 0.70 means low confidence and needs a human judge.")).toBeInTheDocument();
 
   const jevButton = await screen.findByRole("button", { name: "Jev" });
-  expect(jevButton).toBeEnabled();
+  expect(jevButton).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByText(/Google AI Studio's free tier/)).not.toBeInTheDocument();
 
   const predictionPanel = await screen.findByRole("region", { name: "Model prediction" });
-  expect(await within(predictionPanel).findByText("0.84")).toBeInTheDocument();
+  expect(await within(predictionPanel).findByText("jev-1.14.0")).toBeInTheDocument();
+  expect(sortCalls[0]?.engine).toBe("jev");
 
   await userEvent.click(screen.getByRole("button", { name: "Add choice" }));
   const fourthLabel = screen.getByRole("textbox", { name: "Choice 4 label" });
   expect(fourthLabel).toHaveValue("D");
   await userEvent.type(screen.getByRole("textbox", { name: "Choice 4 description" }), "Hardware lab maintenance");
 
+  const geminiButton = screen.getByRole("button", { name: "Gemini" });
+  await userEvent.click(geminiButton);
+  expect(screen.getByText(/Google AI Studio's free tier/)).toBeInTheDocument();
+
   const paragraphBox = screen.getByRole("textbox", { name: "Paragraph to sort" });
   await userEvent.clear(paragraphBox);
   await userEvent.type(paragraphBox, "Cleaned dust filters on the open GPU rig.");
-  await userEvent.click(screen.getByRole("button", { name: "Sort with Laya" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sort with Gemini" }));
 
   await vi.waitFor(() => {
     expect(sortCalls.length).toBeGreaterThanOrEqual(2);
@@ -130,14 +147,16 @@ test("Dispatch sorts paragraphs with custom prompt and choices on Laya, then on 
   expect(latest?.items).toEqual(["Cleaned dust filters on the open GPU rig."]);
   const matches = await within(predictionPanel).findAllByText(/Hardware lab maintenance/);
   expect(matches.length).toBeGreaterThanOrEqual(1);
-  expect(latest?.engine).toBe("laya");
+  expect(latest?.engine).toBe("gemini");
+  expect(await within(predictionPanel).findByText("gemini-decision-1")).toBeInTheDocument();
 
-  await userEvent.click(jevButton);
-  await userEvent.click(screen.getByRole("button", { name: "Sort with Jev" }));
+  await userEvent.click(screen.getByRole("button", { name: "Laya" }));
+  expect(screen.queryByText(/Google AI Studio's free tier/)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Sort with Laya" }));
   await vi.waitFor(() => {
-    expect(sortCalls[sortCalls.length - 1]?.engine).toBe("jev");
+    expect(sortCalls[sortCalls.length - 1]?.engine).toBe("laya");
   });
-  expect(await within(predictionPanel).findByText("jev-1.14.0")).toBeInTheDocument();
+  expect(await within(predictionPanel).findByText("english")).toBeInTheDocument();
 });
 
 test("Lens runs semantic Typesense search and indexes uploaded user pictures into the database", async () => {
@@ -189,7 +208,7 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
           archive: 271,
           vector_store: "typesense",
           subjects: [{ subject: "Dogs", photographs: 19 }],
-          model: "google/embeddinggemma-2",
+          model: "gemini-embedding-2",
           dimensions: 768,
           source: "The Metropolitan Museum of Art",
           licence: "CC0",
@@ -197,6 +216,15 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
       }
       if (url.includes("/v1/search?")) {
         searchUrls.push(url);
+        const queryText = new URL(url, "http://localhost").searchParams.get("q") ?? "";
+        if (queryText === "spaceship") {
+          return jsonResponse({
+            query: "spaceship",
+            mode: "picture",
+            took_ms: 38.0,
+            hits: [],
+          });
+        }
         return jsonResponse({
           query: "anjing",
           mode: "picture",
@@ -237,9 +265,19 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
 
   renderAt("/lens", <LensSearch />);
   expect(await screen.findByText(/1 photographs for “anjing”\. None names it in its caption/)).toBeInTheDocument();
+  expect(screen.getByText(/gemini-embedding-2 · 271 archive/)).toBeInTheDocument();
+  expect(screen.getByText(/Picture searches and uploads use Google AI Studio's free tier/)).toBeInTheDocument();
   expect(searchUrls[0]).toContain("mode=picture");
 
+  const searchInput = screen.getByRole("searchbox");
+  await userEvent.clear(searchInput);
+  await userEvent.type(searchInput, "spaceship{Enter}");
+  expect(await screen.findByText(/No photographs matched “spaceship”/)).toBeInTheDocument();
+
   await userEvent.click(screen.getByRole("button", { name: "Add to database" }));
+  expect(
+    screen.getByText(/Pictures use Google AI Studio's free tier, so uploads are sent to Google\./),
+  ).toBeInTheDocument();
   const fileInput = screen.getByLabelText("Choose images to index");
   const testFile = new File([new Uint8Array([137, 80, 78, 71])], "desk.png", { type: "image/png" });
   await userEvent.upload(fileInput, testFile);

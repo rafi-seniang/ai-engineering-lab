@@ -18,6 +18,6 @@ export const LAB_SUBTITLE =
 
 export const LAB_SPECS: { label: string; value: string }[] = [
   { label: "Local GPU", value: "RTX 5050 Laptop, 8 GB VRAM" },
-  { label: "Local models", value: "Laya, EmbeddingGemma 2, DeBERTa" },
-  { label: "Cloud & vector", value: "DeepSeek V4.1, Typesense 27.1" },
+  { label: "Local models", value: "Laya, DeBERTa" },
+  { label: "Cloud & vector", value: "Jev, Gemini, DeepSeek V4.1, Typesense 27.1" },
 ];
