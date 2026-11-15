@@ -46,11 +46,11 @@ variable.
 | `src/lab/`             | the project registry, backend URLs, the health polling hook, picture credits. Tiketa has its own site and repository (tiketa-app): the lobby links to it |
 | `src/api/`             | typed clients, and `generated/` types from OpenAPI                                                                                                       |
 | `src/styles/brand.css` | the one brand: IBM Plex Sans, neutral stone ground, and teal data accent                                                                                 |
-| `public/media/`        | `ai-lab-workbench.webp` for the lobby plus web media assets                                                                                              |
+| `public/media/`        | `lab-v-jepa-2.webp` for the lobby plus web media assets                                                                                                  |
 
 ## Design
 
-The lobby fits on one `1440x900` screen on a stone ground (`#f2f2f0`) with the lab workbench photo on the left and all
-six services on the right. Services whose `/health` endpoint answers show `On` and open on click. Services whose
-backend is stopped (such as Footfall on `:8050` when paused) stay visible as `Off` and cannot be clicked. Project
-screens use the framed-sheet app style (`inspect.mjs --app`: 0 FAIL, 0 WARN across 1440px, 768px and 390px).
+The lobby fits on one `1440x900` screen on a stone ground (`#f2f2f0`) with the robotics research photo on the left and all
+six services on the right. Services whose `/health` endpoint answers show `On` and open on click. Services paused for
+maintenance stay visible as `In Maintenance` and cannot be clicked. Project screens use the framed-sheet app style
+(`inspect.mjs --app`: 0 FAIL, 0 WARN across 1440px, 768px and 390px).

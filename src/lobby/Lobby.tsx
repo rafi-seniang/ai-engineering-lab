@@ -24,7 +24,6 @@ function ProjectCardBody({ project, status }: { project: Project; status: Servic
           <span className="lb-card-engine">{project.engine}</span>
         </div>
         <div className="lb-card-right">
-          <span className="lb-card-port">:{project.port}</span>
           <span className="lb-status" data-status={status}>
             <i aria-hidden="true" />
             {STATUS_WORDS[status]}
@@ -89,11 +88,12 @@ export function Lobby() {
 
           <figure className="lb-photo-card">
             <img
-              src="/media/ai-lab-workbench.webp"
-              alt="AI engineering workbench with an open aluminum GPU test rig, notebooks, and telemetry monitor in daylight"
+              src="/media/lab-v-jepa-2.webp"
+              alt="Robotic arm with a two-finger gripper picking up a blue cup in daylight, from Meta V-JEPA 2 research"
               width={1200}
-              height={896}
+              height={675}
             />
+            <p className="lb-photo-credit">Photo: Meta (V-JEPA 2 Research)</p>
             <figcaption className="lb-specs">
               {LAB_SPECS.map((spec) => (
                 <div key={spec.label}>
