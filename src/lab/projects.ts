@@ -9,7 +9,10 @@ export interface Project {
   status: ProjectStatus;
   group: string;
   engine: string;
-  route: string;
+  /** The screen inside this frontend. A project with its own site has `site_port` instead. */
+  route?: string;
+  /** The port of the project's own site on this machine, for a project that is not a screen here. */
+  site_port?: number;
   summary: string;
   picture: string;
   caption: string;
@@ -21,6 +24,13 @@ export const PROJECTS = projectList as Project[];
 export function backendUrl(project: Pick<Project, "id" | "port">): string {
   const configured = import.meta.env[`VITE_${project.id.toUpperCase()}_URL`] as string | undefined;
   return (configured || `http://localhost:${project.port}`).replace(/\/$/, ""); // an empty build arg means unset
+}
+
+/** Where a project's own site is: VITE_<ID>_SITE_URL at build time, else its port on this machine. */
+export function siteUrl(project: Pick<Project, "id" | "site_port">): string | null {
+  const configured = import.meta.env[`VITE_${project.id.toUpperCase()}_SITE_URL`] as string | undefined;
+  if (configured) return configured;
+  return project.site_port ? `http://localhost:${project.site_port}` : null;
 }
 
 export function projectById(id: string): Project {

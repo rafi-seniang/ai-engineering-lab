@@ -35,22 +35,22 @@ variable.
 
 ## Layout
 
-| Path                   | What                                                                                                               |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `src/lobby/`           | the single-screen AI Lab home: workbench photo, hardware specs, and all 5 services with On or Off health checks    |
-| `src/apps/shared/`     | `AppShell`, the frame every project screen sits in (sidebar, top bar, white sheet), and its stylesheet             |
-| `src/apps/pilah/`      | the configurable Dispatch System 1 router: custom prompt, custom choices, local Laya or hosted Jev per request     |
-| `src/apps/gatekeeper/` | the Gatekeeper console: totals, where requests went, a request to try, the live log                                |
-| `src/apps/lens/`       | the Lens semantic search and ingestion screen: Typesense vector search, user image upload to DB, visual neighbours |
-| `src/apps/ledger/`     | the Ledger book: supplier invoices with deterministic arithmetic checks, page view, bank statement reconciliation  |
-| `src/lab/`             | the project registry, backend URLs, the health polling hook, picture credits                                       |
-| `src/api/`             | typed clients, and `generated/` types from OpenAPI                                                                 |
-| `src/styles/brand.css` | the one brand: IBM Plex Sans, neutral stone ground, and teal data accent                                           |
-| `public/media/`        | `ai-lab-workbench.webp` for the lobby plus web media assets                                                        |
+| Path                   | What                                                                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lobby/`           | the single-screen AI Lab home: workbench photo, hardware specs, and all 5 services with On or Off health checks                                          |
+| `src/apps/shared/`     | `AppShell`, the frame every project screen sits in (sidebar, top bar, white sheet), and its stylesheet                                                   |
+| `src/apps/pilah/`      | the configurable Dispatch System 1 router: custom prompt, custom choices, local Laya or hosted Jev per request                                           |
+| `src/apps/gatekeeper/` | the Gatekeeper console: totals, where requests went, a request to try, the live log                                                                      |
+| `src/apps/lens/`       | the Lens semantic search and ingestion screen: Typesense vector search, user image upload to DB, visual neighbours                                       |
+| `src/apps/ledger/`     | the Ledger book: supplier invoices with deterministic arithmetic checks, page view, bank statement reconciliation                                        |
+| `src/lab/`             | the project registry, backend URLs, the health polling hook, picture credits. Tiketa has its own site and repository (tiketa-app): the lobby links to it |
+| `src/api/`             | typed clients, and `generated/` types from OpenAPI                                                                                                       |
+| `src/styles/brand.css` | the one brand: IBM Plex Sans, neutral stone ground, and teal data accent                                                                                 |
+| `public/media/`        | `ai-lab-workbench.webp` for the lobby plus web media assets                                                                                              |
 
 ## Design
 
 The lobby fits on one `1440x900` screen on a stone ground (`#f2f2f0`) with the lab workbench photo on the left and all
-five services on the right. Services whose `/health` endpoint answers show `On` and open on click. Services whose
+six services on the right. Services whose `/health` endpoint answers show `On` and open on click. Services whose
 backend is stopped (such as Footfall on `:8050` when paused) stay visible as `Off` and cannot be clicked. Project
 screens use the framed-sheet app style (`inspect.mjs --app`: 0 FAIL, 0 WARN across 1440px, 768px and 390px).

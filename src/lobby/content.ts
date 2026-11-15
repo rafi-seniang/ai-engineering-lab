@@ -14,7 +14,7 @@ export const OWNER = {
 };
 
 export const LAB_SUBTITLE =
-  "Five standalone FastAPI backends sharing one 8 GB RTX 5050, DeepSeek V4.1, and Typesense. Services open when their port is on.";
+  "Six standalone FastAPI backends sharing one 8 GB RTX 5050, DeepSeek V4.1, and Typesense. Services open when their port is on.";
 
 export const LAB_SPECS: { label: string; value: string }[] = [
   { label: "Local GPU", value: "RTX 5050 Laptop, 8 GB VRAM" },

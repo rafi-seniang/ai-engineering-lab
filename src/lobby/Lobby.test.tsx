@@ -42,7 +42,10 @@ test("projects whose backend answers /health show On and link to their route", a
   expect(projectCard("Dispatch").tagName).toBe("A");
   expect(projectCard("Footfall").tagName).toBe("DIV");
   expect(projectCard("Footfall")).toHaveAttribute("aria-disabled", "true");
-  expect(screen.getByText("4 of 5 on")).toBeInTheDocument();
+  expect(within(projectCard("Tiketa")).getByText("On")).toBeInTheDocument();
+  expect(projectCard("Tiketa")).toHaveAttribute("href", "http://localhost:5174"); // its own site, not a screen here
+  expect(within(projectCard("Tiketa")).getByText("Open site")).toBeInTheDocument();
+  expect(screen.getByText("5 of 6 on")).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Contact" }));
   const dialog = screen.getByRole("dialog", { name: "Contact details" });

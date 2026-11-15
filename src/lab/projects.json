@@ -48,6 +48,18 @@
     "caption": "Invoice extraction and bank reconciliation"
   },
   {
+    "id": "tiketa",
+    "name": "Tiketa",
+    "port": 8070,
+    "site_port": 5174,
+    "status": "built",
+    "group": "Language",
+    "engine": "FastAPI + LangGraph + MCP",
+    "summary": "A cinema booking service on its own site: a seat map, with a LangGraph chat agent and an MCP server as add-ons.",
+    "picture": "tiketa-cinema-batavia-1930s",
+    "caption": "Cinema booking with a chat agent and MCP as add-ons"
+  },
+  {
     "id": "footfall",
     "name": "Footfall",
     "port": 8050,

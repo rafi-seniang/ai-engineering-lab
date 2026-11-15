@@ -1,11 +1,11 @@
-// Generates TypeScript types from the OpenAPI schema of every built backend that is running.
+// Generates TypeScript types from the OpenAPI schema of every built backend with a screen here that is running.
 // Run with the backends up: npm run api:types. The generated files are committed, so a build never needs a backend.
 import { readFileSync, writeFileSync } from "node:fs";
 import openapiTS, { astToString } from "openapi-typescript";
 
 const projects = JSON.parse(readFileSync(new URL("../src/lab/projects.json", import.meta.url), "utf-8"));
 
-for (const project of projects.filter((candidate) => candidate.status === "built")) {
+for (const project of projects.filter((candidate) => candidate.status === "built" && candidate.route)) {
   const baseUrl = process.env[`VITE_${project.id.toUpperCase()}_URL`] ?? `http://localhost:${project.port}`;
   const schemaUrl = new URL("/openapi.json", baseUrl);
   try {
