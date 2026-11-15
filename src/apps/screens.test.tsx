@@ -159,6 +159,100 @@ test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches a
   expect(await within(predictionPanel).findByText("english")).toBeInTheDocument();
 });
 
+test("Dispatch switches to Images (1-10) mode and classifies uploaded images via Gemini", async () => {
+  const imageCalls: Array<{
+    engine: string;
+    instructions: string;
+    images: Array<{ name?: string; mime_type?: string; data_base64: string }>;
+  }> = [];
+
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.endsWith("/health")) return jsonResponse({ status: "ok" });
+      if (url.endsWith("/v1/engines")) {
+        return jsonResponse({
+          default_engine: "jev",
+          engines: [
+            {
+              id: "jev",
+              name: "Jev",
+              provider: "TypeSafe AI",
+              available: true,
+              status_label: "Active",
+              detail: "jev-1.14.0",
+            },
+            {
+              id: "gemini",
+              name: "Gemini",
+              provider: "Google AI Studio",
+              available: true,
+              status_label: "Active",
+              detail: "gemini-decision-1",
+            },
+          ],
+        });
+      }
+      if (url.endsWith("/v1/sort")) {
+        return jsonResponse({
+          engine: "jev",
+          latency_ms: 10,
+          confidence_gate: 0.7,
+          results: [
+            {
+              choice: "A",
+              probabilities: { A: 0.9, B: 0.05, C: 0.05 },
+              top_probability: 0.9,
+              checkpoint: "jev-1.14.0",
+              passed_gate: true,
+            },
+          ],
+        });
+      }
+      if (url.endsWith("/v1/sort/images")) {
+        const raw = input instanceof Request ? await input.clone().text() : String(init?.body ?? "{}");
+        const parsed = JSON.parse(raw) as (typeof imageCalls)[number];
+        imageCalls.push(parsed);
+        return jsonResponse({
+          engine: "gemini",
+          latency_ms: 42,
+          confidence_gate: 0.7,
+          results: parsed.images.map((_, idx) => ({
+            choice: idx === 0 ? "A" : "B",
+            probabilities: idx === 0 ? { A: 0.95, B: 0.03, C: 0.02 } : { A: 0.04, B: 0.91, C: 0.05 },
+            top_probability: idx === 0 ? 0.95 : 0.91,
+            checkpoint: "gemini-decision-1",
+            passed_gate: true,
+          })),
+        });
+      }
+      return new Response("not found", { status: 404 });
+    }),
+  );
+
+  renderAt("/dispatch", <PilahInbox />);
+  await userEvent.click(await screen.findByRole("button", { name: "Images (1–10)" }));
+  const fileInput = screen.getByLabelText("Choose images to classify");
+  const img1 = new File([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])], "tower.jpg", {
+    type: "image/jpeg",
+  });
+  const img2 = new File([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14])], "surf.png", {
+    type: "image/png",
+  });
+  await userEvent.upload(fileInput, [img1, img2]);
+  await userEvent.click(await screen.findByRole("button", { name: "Sort 2 images" }));
+
+  await vi.waitFor(() => {
+    expect(imageCalls).toHaveLength(1);
+  });
+  expect(imageCalls[0]?.engine).toBe("gemini");
+  expect(imageCalls[0]?.images.map((item) => item.name)).toEqual(["tower.jpg", "surf.png"]);
+  const grid = screen.getByRole("list", { name: "Queued images" });
+  expect(within(grid).getByText("A · 0.95")).toBeInTheDocument();
+  expect(within(grid).getByText("B · 0.91")).toBeInTheDocument();
+});
+
 test("Lens runs semantic Typesense search and indexes uploaded user pictures into the database", async () => {
   const dog = {
     id: "908149",
