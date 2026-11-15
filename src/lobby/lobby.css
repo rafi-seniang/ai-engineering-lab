@@ -88,8 +88,8 @@
   display: grid;
   grid-template-columns: 5fr 7fr;
   gap: clamp(24px, 3vw, 44px);
-  align-items: center;
-  padding: 12px 0 28px;
+  align-items: start;
+  padding: 24px 0 28px;
 }
 
 .lb-intro {

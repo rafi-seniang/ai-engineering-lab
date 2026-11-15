@@ -1,5 +1,17 @@
 [
   {
+    "id": "tiketa",
+    "name": "Tiketa",
+    "port": 8070,
+    "site_port": 5174,
+    "status": "built",
+    "group": "Language",
+    "engine": "FastAPI + LangGraph + MCP",
+    "summary": "A cinema booking service on its own site: a seat map, with a LangGraph chat agent and an MCP server as add-ons.",
+    "picture": "tiketa-cinema-batavia-1930s",
+    "caption": "Cinema booking with a chat agent and MCP as add-ons"
+  },
+  {
     "id": "pilah",
     "name": "Dispatch",
     "port": 8010,
@@ -7,21 +19,9 @@
     "group": "Language",
     "engine": "Jev + Gemini Decision 1",
     "route": "/dispatch",
-    "summary": "Routes any paragraph into custom choices configured by prompt, with calibrated probabilities.",
+    "summary": "Makes very fast, accurate decisions from messy text or images into custom prompt-defined choices, with calibrated probabilities.",
     "picture": "pilah-sorting-mail-1910",
     "caption": "Configurable System 1 decision router"
-  },
-  {
-    "id": "gatekeeper",
-    "name": "Gatekeeper",
-    "port": 8020,
-    "status": "built",
-    "group": "Language",
-    "engine": "DeBERTa + DeepSeek",
-    "route": "/gatekeeper",
-    "summary": "Checks every LLM request: blocks prompt injection, masks identifiers, routes easy prompts to a small model.",
-    "picture": "gatekeeper-toll-gate-1900",
-    "caption": "OpenAI-compatible LLM security gateway"
   },
   {
     "id": "lens",
@@ -36,16 +36,16 @@
     "caption": "Multimodal vector search in Typesense"
   },
   {
-    "id": "tiketa",
-    "name": "Tiketa",
-    "port": 8070,
-    "site_port": 5174,
+    "id": "gatekeeper",
+    "name": "Gatekeeper",
+    "port": 8020,
     "status": "built",
     "group": "Language",
-    "engine": "FastAPI + LangGraph + MCP",
-    "summary": "A cinema booking service on its own site: a seat map, with a LangGraph chat agent and an MCP server as add-ons.",
-    "picture": "tiketa-cinema-batavia-1930s",
-    "caption": "Cinema booking with a chat agent and MCP as add-ons"
+    "engine": "IndoPII + Jev + DeepSeek",
+    "route": "/gatekeeper",
+    "summary": "LLM security gateway: masks personal data locally, then blocks prompt injection and malicious tool results.",
+    "picture": "gatekeeper-toll-gate-1900",
+    "caption": "LLM security gateway"
   },
   {
     "id": "ledger",
