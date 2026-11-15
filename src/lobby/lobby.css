@@ -289,6 +289,15 @@
   border-color: var(--brand-on);
 }
 
+.lb-status[data-status="maintenance"] {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.lb-status[data-status="maintenance"] i {
+  border-color: #d97706;
+}
+
 .lb-open {
   font-size: 12px;
   font-weight: 600;
