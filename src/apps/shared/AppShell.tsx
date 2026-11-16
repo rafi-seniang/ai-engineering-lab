@@ -19,6 +19,8 @@ interface AppShellProps {
   sidebar?: ReactNode;
   sidebarFooter?: ReactNode;
   topbar?: ReactNode;
+  /** The app's section of the guide (/guide#id): a visible "How it works" link in the top bar */
+  guide?: string;
   className?: string;
   children: ReactNode;
 }
@@ -39,6 +41,7 @@ export function AppShell({
   sidebar,
   sidebarFooter,
   topbar,
+  guide,
   className,
   children,
 }: AppShellProps) {
@@ -109,6 +112,11 @@ export function AppShell({
             {product}
           </span>
           {topbar}
+          {guide && (
+            <Link className="guide-link" to={`/guide#${guide}`}>
+              How it works
+            </Link>
+          )}
         </header>
 
         <main className="sheet">{children}</main>

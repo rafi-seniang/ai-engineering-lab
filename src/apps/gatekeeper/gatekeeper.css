@@ -71,9 +71,30 @@
   background: var(--chart-muted);
 }
 
-/* the console */
-.gate-console h2 {
-  margin-bottom: 12px;
+/* the console: first on the page and the one outlined panel, so the way to try the gate is seen first */
+.gate-console {
+  margin-bottom: var(--gap);
+  border: 1px solid var(--accent);
+}
+.gate-console-head {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+.gate-try-label {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+.gate-decision small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-weight: 400;
 }
 .gate-scope-field {
   display: grid;

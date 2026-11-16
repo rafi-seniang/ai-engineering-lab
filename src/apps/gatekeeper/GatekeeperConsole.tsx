@@ -48,7 +48,15 @@ interface ConsoleResult {
   sent: boolean;
 }
 
-function DecisionLine({ result }: { result: ConsoleResult }) {
+interface Cutoffs {
+  injection: number;
+  offTopic: number;
+}
+
+// What the gate ships with, until /meta answers with the running values
+const DEFAULT_CUTOFFS: Cutoffs = { injection: 0.9, offTopic: 0.9 };
+
+function DecisionLine({ result, cutoffs }: { result: ConsoleResult; cutoffs: Cutoffs }) {
   const { decision } = result;
   const offTopic = decision.off_topic_probability ?? 0;
   const injBlocked = decision.blocked && decision.blocked_by === "injection";
@@ -59,12 +67,14 @@ function DecisionLine({ result }: { result: ConsoleResult }) {
         <dt>Injection</dt>
         <dd className={injBlocked ? "is-bad" : ""}>
           {decision.injection_probability.toFixed(2)} {injBlocked ? "blocked" : "allowed"}
+          <small>blocks at {cutoffs.injection.toFixed(2)}</small>
         </dd>
       </div>
       <div>
         <dt>Off-topic</dt>
         <dd className={ootBlocked ? "is-bad" : ""}>
           {offTopic.toFixed(2)} {ootBlocked ? "blocked" : "allowed"}
+          <small>blocks at {cutoffs.offTopic.toFixed(2)}</small>
         </dd>
       </div>
       <div>
@@ -157,13 +167,19 @@ export function GatekeeperConsole() {
     setBusy(null);
   }
 
+  const cutoffs: Cutoffs = meta.data
+    ? {
+        injection: meta.data.block_from_injection_probability,
+        offTopic: meta.data.block_from_off_topic_probability,
+      }
+    : DEFAULT_CUTOFFS;
   const totals = stats.data;
   const routed = totals ? totals.small_routed + totals.strong_routed : 0;
   const offline = stats.isError && events.isError;
   let finding = "Reading the gate's log.";
   if (offline) finding = "Gatekeeper is not responding.";
   else if (totals && totals.requests === 0)
-    finding = "No requests yet. Send a test prompt below or call the OpenAI-compatible endpoint.";
+    finding = "No requests yet. Try one below or call the OpenAI-compatible endpoint.";
   else if (totals)
     finding = `${totals.requests} requests: ${totals.blocked} blocked, ${totals.cached} from the cache, ${share(totals.small_routed, routed)} of the rest answered by the small model.`;
 
@@ -171,6 +187,7 @@ export function GatekeeperConsole() {
     <AppShell
       product="Gatekeeper"
       mark={<Mark size={20} />}
+      guide="gatekeeper"
       scope={{
         line: "LLM gateway",
         detail: meta.data ? meta.data.engine : "Jev + Gemini Decision",
@@ -186,6 +203,72 @@ export function GatekeeperConsole() {
           <span className="stamp">Refreshes every 5 seconds</span>
         </div>
       </div>
+
+      <section className="panel gate-console" aria-labelledby="console-title">
+        <div className="gate-console-head">
+          <span className="gate-try-label">Try it</span>
+          <h2 id="console-title">Send a request through the gate</h2>
+          <p className="meta">
+            Set the topics this assistant may handle, write what a user would send, then check it or send it to the
+            model. The gate blocks at {cutoffs.injection.toFixed(2)} injection or {cutoffs.offTopic.toFixed(2)}{" "}
+            off-topic.
+          </p>
+        </div>
+        <form onSubmit={(event) => run("send", event)}>
+          <div className="gate-scope-field">
+            <label htmlFor="gate-scope">Allowed scope</label>
+            <input
+              id="gate-scope"
+              type="text"
+              className="input"
+              value={scope}
+              onChange={(event) => setScope(event.target.value)}
+              placeholder="Topics this assistant is allowed to handle"
+              maxLength={600}
+            />
+          </div>
+          <label className="visually-hidden" htmlFor="gate-text">
+            Request text
+          </label>
+          <textarea
+            id="gate-text"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            placeholder="Write what a user would send in English or Indonesian"
+            rows={3}
+            maxLength={4000}
+          />
+          <div className="gate-samples">
+            {SAMPLE_REQUESTS.map((sample) => (
+              <button key={sample} type="button" className="btn ghost" onClick={() => setText(sample)}>
+                {sample}
+              </button>
+            ))}
+          </div>
+          <div className="gate-actions">
+            <button className="btn" type="button" disabled={busy !== null || offline} onClick={() => run("check")}>
+              {busy === "check" ? "Checking" : "Check only"}
+            </button>
+            <button className="btn primary" type="submit" disabled={busy !== null || offline}>
+              {busy === "send" ? "Waiting for the model" : "Send through the gate"}
+            </button>
+          </div>
+        </form>
+        {failure && <p className="gate-failure">Couldn't reach the gate: {failure}.</p>}
+        {result && (
+          <div className="gate-result" aria-live="polite">
+            <DecisionLine result={result} cutoffs={cutoffs} />
+            {result.refused && <p className="gate-refused">{result.refused}</p>}
+            {result.answer !== undefined && (
+              <div className="gate-answer">
+                <p className="meta">{result.cached ? "From the cache" : `Answered by ${result.model}`}</p>
+                <p>{result.answer}</p>
+              </div>
+            )}
+            {!result.sent && <p className="meta">Checked only. Nothing was sent to a model.</p>}
+          </div>
+        )}
+      </section>
 
       <section className="kpis gate-kpis" aria-label="Totals">
         <div className="kpi">
@@ -243,64 +326,6 @@ export function GatekeeperConsole() {
               <dd>{totals?.failed ?? NONE}</dd>
             </div>
           </dl>
-        </section>
-
-        <section className="panel gate-console" aria-labelledby="console-title">
-          <h2 id="console-title">Try a request</h2>
-          <form onSubmit={(event) => run("send", event)}>
-            <div className="gate-scope-field">
-              <label htmlFor="gate-scope">Allowed scope</label>
-              <input
-                id="gate-scope"
-                type="text"
-                className="input"
-                value={scope}
-                onChange={(event) => setScope(event.target.value)}
-                placeholder="Topics this assistant is allowed to handle"
-                maxLength={600}
-              />
-            </div>
-            <label className="visually-hidden" htmlFor="gate-text">
-              Request text
-            </label>
-            <textarea
-              id="gate-text"
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              placeholder="Write what a user would send in English or Indonesian"
-              rows={3}
-              maxLength={4000}
-            />
-            <div className="gate-samples">
-              {SAMPLE_REQUESTS.map((sample) => (
-                <button key={sample} type="button" className="btn ghost" onClick={() => setText(sample)}>
-                  {sample}
-                </button>
-              ))}
-            </div>
-            <div className="gate-actions">
-              <button className="btn" type="button" disabled={busy !== null || offline} onClick={() => run("check")}>
-                {busy === "check" ? "Checking" : "Check only"}
-              </button>
-              <button className="btn primary" type="submit" disabled={busy !== null || offline}>
-                {busy === "send" ? "Waiting for the model" : "Send through the gate"}
-              </button>
-            </div>
-          </form>
-          {failure && <p className="gate-failure">Couldn't reach the gate: {failure}.</p>}
-          {result && (
-            <div className="gate-result" aria-live="polite">
-              <DecisionLine result={result} />
-              {result.refused && <p className="gate-refused">{result.refused}</p>}
-              {result.answer !== undefined && (
-                <div className="gate-answer">
-                  <p className="meta">{result.cached ? "From the cache" : `Answered by ${result.model}`}</p>
-                  <p>{result.answer}</p>
-                </div>
-              )}
-              {!result.sent && <p className="meta">Checked only. Nothing was sent to a model.</p>}
-            </div>
-          )}
         </section>
 
         <section className="panel gate-events" aria-labelledby="events-title">
