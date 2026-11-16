@@ -43,7 +43,7 @@ export interface paths {
     };
     /**
      * Search
-     * @description `picture` runs pure semantic vector search in Typesense, `caption` matches words, `hybrid` fuses both.
+     * @description Photographs whose picture means what the words say. Captions, titles and tags are never read.
      */
     get: operations["search_v1_search_get"];
     put?: never;
@@ -83,7 +83,7 @@ export interface paths {
     };
     /**
      * List Photographs
-     * @description Recent photographs in the collection, filtered by origin (upload, met or all) and optional tag.
+     * @description Recent photographs in the collection, filtered by origin (upload, met or all).
      */
     get: operations["list_photographs_v1_photographs_get"];
     put?: never;
@@ -163,13 +163,6 @@ export interface components {
     Body_add_photographs_v1_photographs_post: {
       /** Files */
       files: string[];
-      /** Title */
-      title?: string | null;
-      /**
-       * Tags
-       * @default
-       */
-      tags: string;
     };
     /** Body_search_by_image_v1_search_image_post */
     Body_search_by_image_v1_search_image_post: {
@@ -186,8 +179,6 @@ export interface components {
       archive: number;
       /** Vector Store */
       vector_store: string;
-      /** Subjects */
-      subjects: components["schemas"]["SubjectCount"][];
       /** Model */
       model: string;
       /** Dimensions */
@@ -214,8 +205,6 @@ export interface components {
       photograph: components["schemas"]["Photograph"];
       /** Score */
       score: number;
-      /** In Caption */
-      in_caption: boolean;
     };
     /** IngestResult */
     IngestResult: {
@@ -293,13 +282,6 @@ export interface components {
       /** Docs Path */
       docs_path: string;
     };
-    /** SubjectCount */
-    SubjectCount: {
-      /** Subject */
-      subject: string;
-      /** Photographs */
-      photographs: number;
-    };
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -369,7 +351,6 @@ export interface operations {
       query: {
         /** @description What to look for, in any language */
         q: string;
-        mode?: "hybrid" | "picture" | "caption";
         origin?: "all" | "upload" | "met";
         /** @description Results to return. The service's default when left out. */
         limit?: number | null;
@@ -441,8 +422,6 @@ export interface operations {
     parameters: {
       query?: {
         origin?: "all" | "upload" | "met";
-        /** @description Filter by subject or Untagged */
-        tag?: string | null;
         /** @description Results to return. The service's default when left out. */
         limit?: number | null;
       };

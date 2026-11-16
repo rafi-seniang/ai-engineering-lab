@@ -35,18 +35,19 @@ variable.
 
 ## Layout
 
-| Path                   | What                                                                                                                                                     |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lobby/`           | the single-screen AI Lab home: workbench photo, hardware specs, and all 5 services with On or Off health checks                                          |
-| `src/apps/shared/`     | `AppShell`, the frame every project screen sits in (sidebar, top bar, white sheet), and its stylesheet                                                   |
+| Path                   | What                                                                                                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lobby/`           | the single-screen AI Lab home: workbench photo, hardware specs, and all 5 services with On or Off health checks                                                   |
+| `src/apps/shared/`     | `AppShell`, the frame every project screen sits in (sidebar, top bar, white sheet), and its stylesheet                                                            |
 | `src/apps/pilah/`      | the configurable Dispatch System 1 router: custom prompt and choices, 1 to 10 texts or pictures a batch, Jev, Gemini Decision or local Laya picked in the sidebar |
-| `src/apps/gatekeeper/` | the Gatekeeper console: totals, where requests went, a request to try, the live log                                                                      |
-| `src/apps/lens/`       | the Lens semantic search and ingestion screen: Typesense vector search, user image upload to DB, visual neighbours                                       |
-| `src/apps/ledger/`     | the Ledger book: supplier invoices with deterministic arithmetic checks, page view, bank statement reconciliation                                        |
-| `src/lab/`             | the project registry, backend URLs, the health polling hook, picture credits. Tiketa has its own site and repository (tiketa-app): the lobby links to it |
-| `src/api/`             | typed clients, and `generated/` types from OpenAPI                                                                                                       |
-| `src/styles/brand.css` | the one brand: IBM Plex Sans, neutral stone ground, and teal data accent                                                                                 |
-| `public/media/`        | `lab-v-jepa-2.webp` for the lobby plus web media assets                                                                                                  |
+| `src/apps/gatekeeper/` | the Gatekeeper console: a request to try first (scope, text, check or send, with the block cutoffs), totals, where requests went, the live log                    |
+| `src/apps/lens/`       | the Lens search and ingestion screen: pictures only (no titles, dates or tags), Typesense vector search, uploads without labels, visual neighbours                |
+| `src/apps/ledger/`     | the Ledger book: supplier invoices with deterministic arithmetic checks, page view, bank statement reconciliation                                                 |
+| `src/guide/`           | `/guide`: how Dispatch, Lens and Gatekeeper work, in English or Indonesian (`?lang=id`), with Gatekeeper's request flow. Each app's top bar links to its section  |
+| `src/lab/`             | the project registry, backend URLs, the health polling hook, picture credits. Tiketa has its own site and repository (tiketa-app): the lobby links to it          |
+| `src/api/`             | typed clients, and `generated/` types from OpenAPI                                                                                                                |
+| `src/styles/brand.css` | the one brand: IBM Plex Sans, neutral stone ground, and teal data accent                                                                                          |
+| `public/media/`        | `lab-v-jepa-2.webp` for the lobby plus web media assets                                                                                                           |
 
 ## Design
 

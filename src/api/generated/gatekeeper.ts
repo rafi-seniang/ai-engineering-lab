@@ -114,7 +114,7 @@ export interface components {
        */
       role: "system" | "user" | "assistant" | "tool" | "developer";
       /** Content */
-      content: string;
+      content?: string | null;
     } & {
       [key: string]: unknown;
     };
@@ -156,8 +156,11 @@ export interface components {
     GateDecision: {
       /** Injection Probability */
       injection_probability: number;
-      /** Off Topic Probability */
-      off_topic_probability?: number;
+      /**
+       * Off Topic Probability
+       * @default 0
+       */
+      off_topic_probability: number;
       /** Tool Result Probability */
       tool_result_probability?: number | null;
       /** Blocked */
@@ -219,8 +222,11 @@ export interface components {
       cached: number;
       /** Blocked */
       blocked: number;
-      /** Off Topic Blocked */
-      off_topic_blocked?: number;
+      /**
+       * Off Topic Blocked
+       * @default 0
+       */
+      off_topic_blocked: number;
       /** Failed */
       failed: number;
       /** Small Routed */
@@ -262,6 +268,10 @@ export interface components {
       own_ui_path: string;
       /** Docs Path */
       docs_path: string;
+      /** Block From Injection Probability */
+      block_from_injection_probability: number;
+      /** Block From Off Topic Probability */
+      block_from_off_topic_probability: number;
     };
     /** ValidationError */
     ValidationError: {

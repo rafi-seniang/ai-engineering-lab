@@ -1,25 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type DragEvent, type FormEvent, useEffect, useMemo, useState } from "react";
+import { type DragEvent, type FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import {
-  imageUrl,
-  lens,
-  type Mode,
-  type OriginFilter,
-  type Photograph,
-  type SearchResult,
-  unwrap,
-} from "../../api/lens";
+import { imageUrl, lens, type OriginFilter, type Photograph, type SearchResult, unwrap } from "../../api/lens";
 import { AppShell } from "../shared/AppShell";
 import "./lens.css";
 
 const DEFAULT_QUERY = "surfing";
-const EXAMPLES = ["selancar di ombak", "yellow sports car", "planet Mars", "Burj Khalifa"];
-const MODES: { value: Mode; label: string }[] = [
-  { value: "picture", label: "Semantic" },
-  { value: "hybrid", label: "Hybrid" },
-  { value: "caption", label: "Caption" },
-];
+const EXAMPLES = ["selancar di ombak", "yellow sports car", "planet Mars", "menara tertinggi di dunia"];
 const ORIGINS: { value: OriginFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "upload", label: "My uploads" },
@@ -52,44 +39,7 @@ const DATABASE_ICON = (
   </svg>
 );
 
-function finding(
-  result: SearchResult | undefined,
-  query: string,
-  picture: boolean,
-  uploadsView: boolean,
-  activeTag: string | null,
-): string {
-  if (!result) return uploadsView || activeTag ? "Loading pictures." : "Searching Typesense.";
-  const count = result.hits.length;
-  if (activeTag) {
-    return count === 0
-      ? `No pictures in "${activeTag}" yet. Upload an image without tags to place it in Untagged.`
-      : `${count} ${count === 1 ? "picture" : "pictures"} in category "${activeTag}", shown directly without search.`;
-  }
-  if (uploadsView) {
-    return count === 0
-      ? "No user uploads in the database yet. Click Add to database to index your own images."
-      : `${count} ${count === 1 ? "picture" : "pictures"} uploaded to Typesense.`;
-  }
-  if (picture) {
-    return count === 0
-      ? "No photographs closely matched your picture."
-      : `${count} photographs that look like your picture.`;
-  }
-  if (result.mode === "caption") {
-    return count === 0
-      ? `No caption contains a word of “${query}”. Try Semantic or Hybrid.`
-      : `${count} captions contain a word of “${query}”.`;
-  }
-  if (count === 0) {
-    return `No photographs matched “${query}”. Try another term or upload a picture.`;
-  }
-  const inCaption = result.hits.filter((hit) => hit.in_caption).length;
-  if (inCaption === 0)
-    return `${count} photographs for “${query}”. None names it in its caption: each was found from the picture.`;
-  return `${count} photographs for “${query}”. ${inCaption} name it in the caption, ${count - inCaption} were found from the picture alone.`;
-}
-
+/** Pictures only: no title, date or tag is shown, because the search never reads them either. */
 function Gallery({
   result,
   selected,
@@ -104,29 +54,21 @@ function Gallery({
   if (result.hits.length === 0) return <p className="empty">{emptyCopy}</p>;
   return (
     <ul className="lens-gallery">
-      {result.hits.map(({ photograph, in_caption }) => {
+      {result.hits.map(({ photograph, score }, index) => {
         const ratio = photograph.width / photograph.height;
-        const isUpload = photograph.origin === "upload";
+        const label =
+          result.mode === "browse" ? `Picture ${index + 1}` : `Result ${index + 1}, similarity ${score.toFixed(2)}`;
         return (
           <li key={photograph.id} style={{ flex: `${ratio} 1 ${Math.round(ratio * ROW_HEIGHT)}px` }}>
             <button
               type="button"
               className="lens-card"
               aria-pressed={selected === photograph.id}
+              aria-label={label}
+              title={label}
               onClick={() => onSelect(photograph)}
             >
-              <img
-                src={imageUrl(photograph)}
-                alt={photograph.title}
-                loading="lazy"
-                style={{ aspectRatio: `${ratio}` }}
-              />
-              <span className="lens-card-title">{photograph.title}</span>
-              <span className="lens-card-meta">
-                {photograph.date || "Undated"}
-                {isUpload && <b className="lens-origin-badge">uploaded</b>}
-                {in_caption && <b className="lens-in-caption">in caption</b>}
-              </span>
+              <img src={imageUrl(photograph)} alt="" loading="lazy" style={{ aspectRatio: `${ratio}` }} />
             </button>
           </li>
         );
@@ -159,35 +101,17 @@ function Detail({
   });
   const isUpload = photograph.origin === "upload";
   return (
-    <aside className="panel lens-detail" aria-label="Selected photograph">
+    <aside className="panel lens-detail" aria-label="Selected picture">
       <header>
-        <h2>{photograph.title}</h2>
+        <h2>Selected picture</h2>
         <button type="button" className="btn ghost" onClick={onClose}>
           Close
         </button>
       </header>
-      <img src={imageUrl(photograph)} alt={photograph.title} className="lens-detail-image" />
-      <dl className="facts">
-        <div>
-          <dt>{isUpload ? "Source" : "Photographer"}</dt>
-          <dd>{photograph.artist || (isUpload ? "Uploaded to lab" : "Unknown")}</dd>
-        </div>
-        <div>
-          <dt>Date</dt>
-          <dd>{photograph.date || "Undated"}</dd>
-        </div>
-        <div>
-          <dt>Medium</dt>
-          <dd>{photograph.medium}</dd>
-        </div>
-        <div>
-          <dt>{isUpload ? "Tags" : "Subjects"}</dt>
-          <dd>{photograph.tags.length > 0 ? photograph.tags.join(", ") : "Untagged"}</dd>
-        </div>
-      </dl>
+      <img src={imageUrl(photograph)} alt="" className="lens-detail-image" />
       {isUpload ? (
         <div className="lens-detail-actions">
-          <span className="pill pos">Stored in Typesense</span>
+          <span className="pill pos">Your upload, stored in Typesense</span>
           <button
             type="button"
             className="btn lens-delete-btn"
@@ -199,7 +123,7 @@ function Detail({
         </div>
       ) : (
         <a className="card-link" href={photograph.source_url} target="_blank" rel="noreferrer">
-          Source & licence
+          Source and licence
         </a>
       )}
       <h3>Looks like this</h3>
@@ -212,9 +136,10 @@ function Detail({
               <button
                 type="button"
                 onClick={() => onSelect(neighbour)}
-                title={`${neighbour.title}, similarity ${score.toFixed(2)}`}
+                aria-label={`Similar picture, similarity ${score.toFixed(2)}`}
+                title={`Similarity ${score.toFixed(2)}`}
               >
-                <img src={imageUrl(neighbour)} alt={neighbour.title} loading="lazy" />
+                <img src={imageUrl(neighbour)} alt="" loading="lazy" />
               </button>
             </li>
           ))}
@@ -228,9 +153,7 @@ export function LensSearch() {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const uploadsView = params.get("view") === "uploads";
-  const activeTag = params.get("tag");
   const query = params.get("q") ?? DEFAULT_QUERY;
-  const mode = (MODES.find((option) => option.value === params.get("mode"))?.value ?? "picture") as Mode;
   const origin = (ORIGINS.find((option) => option.value === params.get("origin"))?.value ?? "all") as OriginFilter;
   const selectedId = params.get("photo");
 
@@ -243,8 +166,6 @@ export function LensSearch() {
   const [ingestOpen, setIngestOpen] = useState(false);
   const [ingestFiles, setIngestFiles] = useState<File[]>([]);
   const [ingestPreviews, setIngestPreviews] = useState<string[]>([]);
-  const [ingestTitle, setIngestTitle] = useState("");
-  const [ingestTags, setIngestTags] = useState("");
   const [ingesting, setIngesting] = useState(false);
   const [ingestNote, setIngestNote] = useState<string | null>(null);
   const [ingestError, setIngestError] = useState<string | null>(null);
@@ -275,25 +196,15 @@ export function LensSearch() {
     queryFn: async () => unwrap(await lens.GET("/v1/collection")),
   });
   const browseQuery = useQuery({
-    queryKey: ["lens", "browse", uploadsView ? "upload" : origin, activeTag],
+    queryKey: ["lens", "browse"],
     queryFn: async () =>
-      unwrap(
-        await lens.GET("/v1/photographs", {
-          params: {
-            query: {
-              origin: uploadsView ? "upload" : origin,
-              tag: activeTag ?? undefined,
-              limit: 48,
-            },
-          },
-        }),
-      ),
-    enabled: (uploadsView || activeTag !== null) && upload === null,
+      unwrap(await lens.GET("/v1/photographs", { params: { query: { origin: "upload", limit: 48 } } })),
+    enabled: uploadsView && upload === null,
   });
   const textSearch = useQuery({
-    queryKey: ["lens", "search", query, mode, origin],
-    queryFn: async () => unwrap(await lens.GET("/v1/search", { params: { query: { q: query, mode, origin } } })),
-    enabled: !uploadsView && activeTag === null && upload === null,
+    queryKey: ["lens", "search", query, origin],
+    queryFn: async () => unwrap(await lens.GET("/v1/search", { params: { query: { q: query, origin } } })),
+    enabled: !uploadsView && upload === null,
   });
   const pictureSearch = useQuery({
     queryKey: ["lens", "picture", upload?.name, upload?.size, upload?.lastModified, origin],
@@ -311,7 +222,7 @@ export function LensSearch() {
       ),
     enabled: upload !== null,
   });
-  const search = upload ? pictureSearch : uploadsView || activeTag !== null ? browseQuery : textSearch;
+  const search = upload ? pictureSearch : uploadsView ? browseQuery : textSearch;
 
   useEffect(() => {
     const hits = search.data?.hits ?? [];
@@ -322,13 +233,6 @@ export function LensSearch() {
       return next;
     });
   }, [search.data]);
-
-  const sidebarSubjects = useMemo(() => {
-    const raw = collection.data?.subjects ?? [];
-    const untaggedEntry = raw.find((item) => item.subject === "Untagged") ?? { subject: "Untagged", photographs: 0 };
-    const others = raw.filter((item) => item.subject !== "Untagged").slice(0, 14);
-    return [untaggedEntry, ...others];
-  }, [collection.data?.subjects]);
 
   function update(changes: Record<string, string | null>) {
     const next = new URLSearchParams(params);
@@ -349,18 +253,13 @@ export function LensSearch() {
     const trimmed = text.trim();
     if (!trimmed) return;
     setUpload(null);
-    update({ q: trimmed, view: null, tag: null, photo: null });
-  }
-
-  function browseCategory(tag: string) {
-    setUpload(null);
-    update({ tag, view: null, photo: null });
+    update({ q: trimmed, view: null, photo: null });
   }
 
   function takePicture(file: File | undefined) {
     if (!file) return;
     setUpload(file);
-    update({ view: null, tag: null, photo: null });
+    update({ view: null, photo: null });
   }
 
   function onDrop(event: DragEvent) {
@@ -380,18 +279,15 @@ export function LensSearch() {
       setIngestError("Choose at least one image file to add to the database.");
       return;
     }
-    const hadCustomTags = ingestTags.trim().length > 0;
     setIngesting(true);
     setIngestError(null);
     try {
       const result = unwrap(
         await lens.POST("/v1/photographs", {
-          body: { files: [], tags: "" },
+          body: { files: [] },
           bodySerializer: () => {
             const form = new FormData();
             for (const file of ingestFiles) form.append("files", file);
-            if (ingestTitle.trim()) form.append("title", ingestTitle.trim());
-            if (ingestTags.trim()) form.append("tags", ingestTags.trim());
             return form;
           },
         }),
@@ -402,20 +298,13 @@ export function LensSearch() {
         return next;
       });
       setIngestFiles([]);
-      setIngestTitle("");
-      setIngestTags("");
       setIngestOpen(false);
       setUpload(null);
       setIngestNote(
-        `Indexed ${result.added.length} ${result.added.length === 1 ? "picture" : "pictures"} into Typesense in ${Math.round(result.took_ms)} ms.`,
+        `Indexed ${result.added.length} ${result.added.length === 1 ? "picture" : "pictures"} into Typesense in ${Math.round(result.took_ms)} ms. Search for what they show.`,
       );
       await queryClient.invalidateQueries({ queryKey: ["lens"] });
-      const firstAdded = result.added[0];
-      if (!hadCustomTags) {
-        update({ tag: "Untagged", view: null, origin: null, photo: firstAdded ? firstAdded.id : null });
-      } else {
-        update({ view: "uploads", tag: null, photo: firstAdded ? firstAdded.id : null });
-      }
+      update({ view: "uploads", photo: result.added[0]?.id ?? null });
     } catch (failure) {
       setIngestError(failure instanceof Error ? failure.message : "Could not index the image.");
     } finally {
@@ -437,7 +326,7 @@ export function LensSearch() {
         return next;
       });
       update({ photo: null });
-      setIngestNote(`Removed "${photograph.title}" from Typesense.`);
+      setIngestNote("Removed the picture from Typesense.");
       await queryClient.invalidateQueries({ queryKey: ["lens"] });
     } catch (failure) {
       setIngestError(failure instanceof Error ? failure.message : "Could not remove the image.");
@@ -448,34 +337,35 @@ export function LensSearch() {
 
   const offline = collection.isError && search.isError;
   const selected = selectedId ? known.get(selectedId) : undefined;
-  const isBrowsing = (uploadsView || activeTag !== null) && upload === null;
+  const browsing = uploadsView && upload === null;
   const sub = offline
     ? "Lens is not responding."
     : search.isError
       ? "The search failed. Try again."
-      : finding(search.data, query, upload !== null, uploadsView && upload === null, upload ? null : activeTag);
+      : "Found by what each picture shows. No title, caption or tag is read.";
 
   const storeName = collection.data?.vector_store || "Typesense 27.1";
   const scopeDetail = collection.data
     ? `${collection.data.model} · ${collection.data.archive ?? collection.data.photographs} archive + ${collection.data.uploaded ?? 0} uploaded`
     : "Gemini Embedding 2 · 768-dim";
-  const emptyCopy = activeTag
-    ? `No pictures in "${activeTag}" yet. Upload an image without tags to place it in Untagged.`
-    : uploadsView && upload === null
-      ? "No user uploads yet. Click Add to database above to index your own pictures into Typesense."
-      : "Nothing found. Try other words or switch source filter.";
-  const pageTitle = upload ? "Your picture" : activeTag ? activeTag : uploadsView ? "Database uploads" : `“${query}”`;
+  const emptyCopy = browsing
+    ? "No uploads yet. Click Add to database above to index your own pictures into Typesense."
+    : upload
+      ? "No picture in the collection looks close enough to yours."
+      : `Nothing in the collection is close enough to “${query}”. Try other words or a picture.`;
+  const pageTitle = upload ? "Your picture" : browsing ? "Database uploads" : `“${query}”`;
 
   return (
     <AppShell
       product="Lens"
       mark={<Mark size={20} />}
+      guide="lens"
       scope={{
-        line: `${storeName} · semantic DB`,
+        line: `${storeName} · vector search`,
         detail: scopeDetail,
       }}
       nav={[
-        { label: "Search", to: "/lens", icon: SEARCH_ICON, current: !uploadsView && activeTag === null },
+        { label: "Search", to: "/lens", icon: SEARCH_ICON, current: !uploadsView },
         {
           label: "Database uploads",
           to: "/lens?view=uploads",
@@ -485,30 +375,13 @@ export function LensSearch() {
         },
       ]}
       className={selected ? "show-detail" : undefined}
-      sidebarFooter={
-        <div className="lens-subjects">
-          <p className="group-label">Subjects</p>
-          {sidebarSubjects.map((subject) => (
-            <button
-              key={subject.subject}
-              type="button"
-              className="nav-item"
-              aria-current={activeTag === subject.subject ? "page" : undefined}
-              onClick={() => browseCategory(subject.subject)}
-            >
-              {subject.subject}
-              <span className="count">{subject.photographs}</span>
-            </button>
-          ))}
-        </div>
-      }
       topbar={
         <form className="search" onSubmit={(event) => searchFor(draft, event)}>
           {SEARCH_ICON}
           <input
             type="search"
             placeholder="Describe any image in English or Indonesian"
-            aria-label="Describe a photograph"
+            aria-label="Describe a picture"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
           />
@@ -525,33 +398,10 @@ export function LensSearch() {
         </div>
         <div className="title-actions">
           {search.data && <span className="stamp">{Math.round(search.data.took_ms)} ms</span>}
-          {upload || activeTag ? (
-            <button
-              type="button"
-              className="btn"
-              onClick={() => {
-                setUpload(null);
-                update({ tag: null, photo: null });
-              }}
-            >
+          {upload && (
+            <button type="button" className="btn" onClick={() => setUpload(null)}>
               Back to search
             </button>
-          ) : (
-            !uploadsView && (
-              <fieldset className="segmented lens-modes">
-                <legend className="visually-hidden">Search mode</legend>
-                {MODES.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={mode === option.value}
-                    onClick={() => update({ mode: option.value })}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </fieldset>
-            )
           )}
           <button
             type="button"
@@ -591,7 +441,7 @@ export function LensSearch() {
             <div>
               <h2>Add images to Typesense</h2>
               <p className="meta">
-                Images uploaded without tags are placed under Untagged and shown directly in the gallery. Pictures use
+                Only the pictures are stored: no title or tag, since search finds them by what they show. Pictures use
                 Google AI Studio's free tier, so uploads are sent to Google.
               </p>
             </div>
@@ -600,61 +450,31 @@ export function LensSearch() {
             </button>
           </header>
 
-          <div className="lens-ingest-grid">
-            <label className="lens-dropzone">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                aria-label="Choose images to index"
-                className="visually-hidden"
-                onChange={(event) => {
-                  const chosen = Array.from(event.target.files ?? []);
-                  if (chosen.length > 0) setIngestFiles(chosen);
-                }}
-              />
-              <strong>
-                {ingestFiles.length > 0
-                  ? `${ingestFiles.length} ${ingestFiles.length === 1 ? "image" : "images"} selected`
-                  : "Choose or drop images here"}
-              </strong>
-              <span>PNG, JPEG, or WebP up to 12 MB each</span>
-            </label>
-
-            <div className="lens-ingest-fields">
-              <div className="field">
-                <label htmlFor="lens-ingest-title">Title (optional)</label>
-                <input
-                  id="lens-ingest-title"
-                  type="text"
-                  className="input"
-                  maxLength={200}
-                  placeholder="Defaults to filename when left blank"
-                  value={ingestTitle}
-                  onChange={(event) => setIngestTitle(event.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="lens-ingest-tags">Tags (optional)</label>
-                <input
-                  id="lens-ingest-tags"
-                  type="text"
-                  className="input"
-                  maxLength={300}
-                  placeholder="Leave blank for Untagged, or enter comma-separated labels"
-                  value={ingestTags}
-                  onChange={(event) => setIngestTags(event.target.value)}
-                />
-              </div>
-            </div>
-          </div>
+          <label className="lens-dropzone">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              aria-label="Choose images to index"
+              className="visually-hidden"
+              onChange={(event) => {
+                const chosen = Array.from(event.target.files ?? []);
+                if (chosen.length > 0) setIngestFiles(chosen);
+              }}
+            />
+            <strong>
+              {ingestFiles.length > 0
+                ? `${ingestFiles.length} ${ingestFiles.length === 1 ? "image" : "images"} selected`
+                : "Choose or drop images here"}
+            </strong>
+            <span>PNG, JPEG, or WebP up to 8 MB each</span>
+          </label>
 
           {ingestPreviews.length > 0 && (
             <ul className="lens-ingest-previews">
-              {ingestPreviews.map((url, index) => (
+              {ingestPreviews.map((url) => (
                 <li key={url}>
-                  <img src={url} alt={ingestFiles[index]?.name ?? "Preview"} />
-                  <span>{ingestFiles[index]?.name}</span>
+                  <img src={url} alt="" />
                 </li>
               ))}
             </ul>
@@ -673,7 +493,7 @@ export function LensSearch() {
         </form>
       )}
 
-      {!isBrowsing && (
+      {!browsing && (
         <div className="filters lens-toolbar">
           <fieldset className="segmented lens-origins">
             <legend className="visually-hidden">Source filter</legend>
@@ -696,7 +516,6 @@ export function LensSearch() {
               </button>
             ))}
           </div>
-          <p className="meta">Picture searches and uploads use Google AI Studio's free tier and are sent to Google.</p>
         </div>
       )}
 
@@ -736,6 +555,9 @@ export function LensSearch() {
           />
         )}
       </div>
+      <p className="meta lens-privacy">
+        Picture searches and uploads use Google AI Studio's free tier and are sent to Google.
+      </p>
     </AppShell>
   );
 }

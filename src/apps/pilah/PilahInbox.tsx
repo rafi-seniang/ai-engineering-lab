@@ -658,16 +658,20 @@ export function PilahInbox() {
   );
 
   function switchInputMode(nextMode: InputMode) {
+    if (nextMode === inputMode) return;
     setInputMode(nextMode);
     setError(null);
     if (nextMode === "images" && !readsImages(selectedEngine)) {
       setSelectedEngine(engines.find((option) => option.available && readsImages(option.id))?.id ?? "jev");
     }
-    if (nextMode === "images") {
-      if (instructions === DEFAULT_PRESET.instructions) {
-        applyImagePreset(DEFAULT_IMAGE_PRESET);
-      }
-    }
+    // Each input keeps its own rule: switching brings back the preset chosen for that input, and its test items stay
+    const rule =
+      nextMode === "images"
+        ? (IMAGE_PRESETS.find((preset) => preset.id === imagePresetId) ?? DEFAULT_IMAGE_PRESET)
+        : activePreset;
+    setInstructions(rule.instructions);
+    setConfidenceGate(rule.gate);
+    setChoices(toEditableChoices(rule.choices));
   }
 
   async function handleFileSelection(event: ChangeEvent<HTMLInputElement>) {
@@ -752,6 +756,7 @@ export function PilahInbox() {
   return (
     <AppShell
       product="Dispatch"
+      guide="dispatch"
       mark={<Mark size={20} />}
       scope={{ line: "System 1 model", detail: "Custom prompt and choices" }}
       nav={[
@@ -970,7 +975,7 @@ export function PilahInbox() {
                       <textarea
                         className="pilah-textarea"
                         aria-label={`Text ${index + 1}`}
-                        rows={2}
+                        rows={3}
                         maxLength={4000}
                         placeholder="Write or paste a text in English or Indonesian..."
                         value={item.text}

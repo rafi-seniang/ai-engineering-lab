@@ -166,6 +166,34 @@
   line-height: 1.35;
 }
 
+/* the way into the guide: the one outlined card in the left column */
+.lb-guide {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--brand-accent);
+  border-radius: 12px;
+  background: var(--brand-surface);
+  color: var(--brand-ink);
+  text-decoration: none;
+  transition: background var(--t-hover) ease;
+}
+.lb-guide strong {
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+.lb-guide strong::after {
+  content: "\00a0\2192";
+}
+.lb-guide span {
+  color: var(--brand-soft-ink);
+  font-size: 13px;
+}
+.lb-guide:hover {
+  background: var(--brand-pale);
+}
+
 /* ---------- right column: all 5 projects ---------- */
 .lb-board {
   display: flex;

@@ -148,26 +148,35 @@
 /* Texts in a batch: each with its answer beside it, like the pictures */
 .pilah-text-list {
   display: grid;
-  gap: 8px;
-  max-height: 420px;
+  gap: 12px;
+  max-height: 720px;
   margin: 0;
   padding: 0;
   overflow-y: auto;
   list-style: none;
 }
+/* Each text takes the panel's full width and grows with what is typed; its answer sits under it */
 .pilah-text-list li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: start;
+  gap: 6px;
+}
+.pilah-text-list .pilah-textarea {
+  min-height: calc(3lh + 22px);
+  max-height: calc(9lh + 22px);
+  field-sizing: content;
 }
 .pilah-text-list li.is-selected .pilah-textarea {
   border-color: var(--accent);
 }
 .pilah-text-side {
-  display: grid;
-  justify-items: end;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+.pilah-text-side > .btn:only-child {
+  margin-left: auto;
 }
 .pill-button {
   padding: 0;
