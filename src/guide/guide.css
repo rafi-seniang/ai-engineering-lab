@@ -290,12 +290,6 @@
   display: grid;
   justify-items: center;
 }
-.gd-outcomes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  width: 100%;
-}
 .gd-branches .gd-step {
   max-width: none;
 }
@@ -315,8 +309,7 @@
 
 @media (max-width: 760px) {
   .gd-columns,
-  .gd-branches,
-  .gd-outcomes {
+  .gd-branches {
     grid-template-columns: minmax(0, 1fr);
   }
   .gd-app-head {
@@ -325,4 +318,36 @@
   .gd-langs button {
     padding: 6px 10px;
   }
+}
+
+/* the cost table: Jev's row is the one tinted, the rest stay plain */
+.gd-table-wrap {
+  overflow-x: auto;
+}
+.gd-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.gd-table th,
+.gd-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--brand-border);
+  text-align: left;
+  vertical-align: top;
+}
+.gd-table thead th {
+  color: var(--brand-soft-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.gd-table tbody th {
+  font-weight: 600;
+}
+.gd-table tr.is-ours {
+  background: #e6f1f3;
+}
+.gd-table tr.is-ours th {
+  color: var(--brand-accent-strong);
 }
