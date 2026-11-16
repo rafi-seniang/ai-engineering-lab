@@ -24,7 +24,7 @@ function Bars({ rows }: { rows: ExampleRow[] }) {
   );
 }
 
-/** One request through Gatekeeper: the guard first, and only an allowed request goes on to the router. */
+/** One request through Gatekeeper: the guard first, and only an allowed request reaches the model. */
 function GateFlow({ flow }: { flow: GuideText["flow"] }) {
   return (
     <figure className="gd-flow" aria-label={flow.title}>
@@ -48,25 +48,49 @@ function GateFlow({ flow }: { flow: GuideText["flow"] }) {
             <strong>{flow.allowed}</strong>
           </div>
           <div className="gd-arrow" aria-hidden="true" />
-          <div className="gd-step">
-            <strong>{flow.router}</strong>
-            <span>{flow.routerDetail}</span>
-          </div>
-          <div className="gd-arrow" aria-hidden="true" />
-          <div className="gd-outcomes">
-            <div className="gd-step">
-              <strong>{flow.small}</strong>
-              <span>{flow.smallDetail}</span>
-            </div>
-            <div className="gd-step">
-              <strong>{flow.strong}</strong>
-              <span>{flow.strongDetail}</span>
-            </div>
+          <div className="gd-step gd-key">
+            <strong>{flow.model}</strong>
+            <span>{flow.modelDetail}</span>
           </div>
         </div>
       </div>
       <p className="gd-after">{flow.after}</p>
     </figure>
+  );
+}
+
+/** What a decision costs and how fast it comes back, Jev beside the models it replaces. */
+function Costs({ costs }: { costs: GuideText["costs"] }) {
+  return (
+    <section className="gd-app gd-costs" id="costs" aria-labelledby="costs-title">
+      <h2 id="costs-title">{costs.title}</h2>
+      <p className="gd-tagline">{costs.lead}</p>
+      <div className="gd-table-wrap">
+        <table className="gd-table">
+          <thead>
+            <tr>
+              {costs.headers.map((header) => (
+                <th key={header} scope="col">
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {costs.rows.map((row) => (
+              <tr key={row.model} className={row.ours ? "is-ours" : undefined}>
+                <th scope="row">{row.model}</th>
+                <td className="num">{row.input}</td>
+                <td className="num">{row.output}</td>
+                <td className="num">{row.thousand}</td>
+                <td>{row.speed}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="gd-measured">{costs.note}</p>
+    </section>
   );
 }
 
@@ -167,10 +191,12 @@ export function Guide() {
               {app.name}
             </a>
           ))}
+          <a href="#costs">{text.costs.title}</a>
         </nav>
         {text.apps.map((app) => (
           <AppSection key={app.id} app={app} text={text} />
         ))}
+        <Costs costs={text.costs} />
       </main>
     </div>
   );
