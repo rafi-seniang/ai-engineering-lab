@@ -30,17 +30,20 @@ export interface GuideText {
     request: string;
     guard: string;
     guardDetail: string;
-    router: string;
-    routerDetail: string;
     allowed: string;
     question: string;
     blocked: string;
     blockedDetail: string;
-    small: string;
-    smallDetail: string;
-    strong: string;
-    strongDetail: string;
+    model: string;
+    modelDetail: string;
     after: string;
+  };
+  costs: {
+    title: string;
+    lead: string;
+    headers: [string, string, string, string, string];
+    rows: { model: string; input: string; output: string; thousand: string; speed: string; ours?: boolean }[];
+    note: string;
   };
   apps: AppGuide[];
 }
@@ -58,19 +61,53 @@ export const GUIDE: Record<Lang, GuideText> = {
       guard: "Guard",
       guardDetail:
         "Jev answers two questions in one call: is this an injection, and is it outside the allowed scope? Gemini Decision answers if Jev cannot.",
-      router: "Router",
-      routerDetail:
-        "DeepSeek rates how much reasoning a good answer needs, from 0 to 2, by reading the probabilities of one answer token.",
       allowed: "No: allowed",
       question: "Injection or off-topic at 0.90 or above?",
       blocked: "Yes: blocked",
-      blockedDetail: "Answered 403 with the reason. No language model ever sees it, not even the router.",
-      small: "Difficulty under 1.0",
-      smallDetail: "Small model: deepseek-flash",
-      strong: "Difficulty 1.0 or more",
-      strongDetail: "Strong model: deepseek-v4-pro",
+      blockedDetail: "Answered 403 with the reason. No language model ever sees it.",
+      model: "The model answers",
+      modelDetail: "deepseek-flash writes the reply. It is the only language model the request reaches.",
       after:
         "The answer is cached, and any tool call the model asks for is checked against what the user asked before it goes back.",
+    },
+    costs: {
+      title: "Why Jev: cost and speed",
+      lead: "One decision here is about 300 tokens in. A chat model also has to write its answer (about 10 tokens, without thinking), while a decision model returns probabilities and bills no output.",
+      headers: [
+        "Model",
+        "Input, per 1M tokens",
+        "Output, per 1M tokens",
+        "1,000 decisions",
+        "Speed from our Jakarta server",
+      ],
+      rows: [
+        {
+          model: "Jev 1.14 (TypeSafe)",
+          input: "$0.042",
+          output: "free",
+          thousand: "$0.013",
+          speed: "about 0.2 s, of which about 20 ms is Jev's own work",
+          ours: true,
+        },
+        {
+          model: "Gemini Decision 1 (Google)",
+          input: "$0.10",
+          output: "free",
+          thousand: "$0.03",
+          speed: "0.4 to 1.1 s measured (Google states 150 to 250 ms)",
+        },
+        {
+          model: "DeepSeek flash",
+          input: "$0.15 to $0.30",
+          output: "$0.60 to $1.20",
+          thousand: "$0.05 to $0.10",
+          speed: "0.3 to 0.6 s for one token",
+        },
+        { model: "Claude Haiku 5.5", input: "$0.10", output: "$0.50", thousand: "$0.035", speed: "not measured here" },
+        { model: "Claude Sonnet 5.5", input: "$2", output: "$10", thousand: "$0.70", speed: "not measured here" },
+        { model: "Claude Fable 5.2", input: "$8", output: "$40", thousand: "$2.80", speed: "not measured here" },
+      ],
+      note: "Prices from each provider's page on 16 Nov 2026 (DeepSeek is cheaper outside its peak hours). Speeds were measured from the lab's server in Jakarta: most of Jev's 0.2 s is the trip to TypeSafe's servers (its API lists one endpoint and no region to choose), so close to them Jev answers in tens of milliseconds.",
     },
     apps: [
       {
@@ -143,7 +180,7 @@ export const GUIDE: Record<Lang, GuideText> = {
         route: "/gatekeeper",
         tagline:
           "Stands in front of a chat model and stops prompt injection and off-topic requests before the model sees them.",
-        what: "An app that talks to a language model can be talked into ignoring its instructions (prompt injection), or used for things it was never meant for. Gatekeeper sits between the app and the model, speaks the same API as OpenAI, and checks every request first. A safe request goes on to a small or a strong model depending on how hard it is, which keeps cost down.",
+        what: "An app that talks to a language model can be talked into ignoring its instructions (prompt injection), or used for things it was never meant for. Gatekeeper sits between the app and the model, speaks the same API as OpenAI, and checks every request first. A safe request goes on to the model, and nothing else does.",
         steps: [
           "Write the topics the assistant may handle in Allowed scope, such as “cinema booking”.",
           "Write a request a user might send, or pick one of the samples.",
@@ -163,7 +200,7 @@ export const GUIDE: Record<Lang, GuideText> = {
           title: "How the decision is made",
           paragraphs: [
             "The guard is Jev, the same decision model as in Dispatch, asked two yes-or-no questions about the request in one call. It reads English and Indonesian alike, and Gemini Decision takes over if Jev does not answer.",
-            "A score of 0.81 off-topic is still allowed, because the gate blocks only at 0.90 or above: a wrong block costs a real user their answer, so the gate needs to be sure. Only a request the guard allows goes on to the router, which is itself a language model: a blocked request reaches no model at all.",
+            "A score of 0.81 off-topic is still allowed, because the gate blocks only at 0.90 or above: a wrong block costs a real user their answer, so the gate needs to be sure. Only a request the guard allows reaches the model, so a blocked one costs one Jev call and nothing more. Jev could also rate how hard a request is to pick between a small and a large model, in the same call. This demo uses one cheap model, so it does not.",
           ],
         },
         measured:
@@ -183,19 +220,59 @@ export const GUIDE: Record<Lang, GuideText> = {
       guard: "Penjaga",
       guardDetail:
         "Jev menjawab dua pertanyaan dalam satu panggilan: apakah ini injeksi, dan apakah di luar topik yang diizinkan? Gemini Decision menjawab kalau Jev gagal.",
-      router: "Router",
-      routerDetail:
-        "DeepSeek menilai seberapa berat penalaran yang dibutuhkan, dari 0 sampai 2, dengan membaca probabilitas satu token jawaban.",
       allowed: "Tidak: lolos",
       question: "Injeksi atau off-topic 0.90 ke atas?",
       blocked: "Ya: diblok",
-      blockedDetail: "Dijawab 403 beserta alasannya. Tidak ada model bahasa yang melihatnya, router pun tidak.",
-      small: "Tingkat kesulitan di bawah 1.0",
-      smallDetail: "Model kecil: deepseek-flash",
-      strong: "Tingkat kesulitan 1.0 ke atas",
-      strongDetail: "Model besar: deepseek-v4-pro",
+      blockedDetail: "Dijawab 403 beserta alasannya. Tidak ada model bahasa yang melihatnya.",
+      model: "Model menjawab",
+      modelDetail: "deepseek-flash menulis balasannya. Hanya model bahasa ini yang dijangkau request.",
       after:
         "Jawabannya di-cache, dan setiap tool call dari model dicek terhadap permintaan user sebelum dikembalikan.",
+    },
+    costs: {
+      title: "Kenapa Jev: biaya dan kecepatan",
+      lead: "Satu keputusan di sini sekitar 300 token input. Model chat juga harus menulis jawabannya (sekitar 10 token, tanpa thinking), sedangkan model keputusan cuma mengembalikan probabilitas dan tidak menagih output.",
+      headers: [
+        "Model",
+        "Input, per 1 juta token",
+        "Output, per 1 juta token",
+        "1.000 keputusan",
+        "Kecepatan dari server Jakarta kita",
+      ],
+      rows: [
+        {
+          model: "Jev 1.14 (TypeSafe)",
+          input: "$0.042",
+          output: "gratis",
+          thousand: "$0.013",
+          speed: "sekitar 0,2 detik, dan kerja Jev sendiri cuma sekitar 20 ms",
+          ours: true,
+        },
+        {
+          model: "Gemini Decision 1 (Google)",
+          input: "$0.10",
+          output: "gratis",
+          thousand: "$0.03",
+          speed: "0,4 sampai 1,1 detik terukur (klaim Google 150 sampai 250 ms)",
+        },
+        {
+          model: "DeepSeek flash",
+          input: "$0.15 sampai $0.30",
+          output: "$0.60 sampai $1.20",
+          thousand: "$0.05 sampai $0.10",
+          speed: "0,3 sampai 0,6 detik untuk satu token",
+        },
+        {
+          model: "Claude Haiku 5.5",
+          input: "$0.10",
+          output: "$0.50",
+          thousand: "$0.035",
+          speed: "tidak diukur di sini",
+        },
+        { model: "Claude Sonnet 5.5", input: "$2", output: "$10", thousand: "$0.70", speed: "tidak diukur di sini" },
+        { model: "Claude Fable 5.2", input: "$8", output: "$40", thousand: "$2.80", speed: "tidak diukur di sini" },
+      ],
+      note: "Harga dari halaman masing-masing penyedia per 16 Nov 2026 (DeepSeek lebih murah di luar jam sibuknya). Kecepatan diukur dari server lab di Jakarta: sebagian besar 0,2 detik Jev adalah perjalanan ke server TypeSafe (API-nya cuma punya satu endpoint, tanpa pilihan region), jadi kalau dekat dengan servernya Jev menjawab dalam puluhan milidetik.",
     },
     apps: [
       {
@@ -269,7 +346,7 @@ export const GUIDE: Record<Lang, GuideText> = {
         route: "/gatekeeper",
         tagline:
           "Berdiri di depan model chat dan menghentikan prompt injection dan request di luar topik sebelum modelnya melihat.",
-        what: "Aplikasi yang memakai model bahasa bisa dibujuk untuk mengabaikan instruksinya (prompt injection), atau dipakai untuk hal yang bukan tugasnya. Gatekeeper duduk di antara aplikasi dan model, memakai API yang sama dengan OpenAI, dan mengecek setiap request lebih dulu. Request yang aman diteruskan ke model kecil atau besar sesuai tingkat kesulitannya, supaya biaya tetap hemat.",
+        what: "Aplikasi yang memakai model bahasa bisa dibujuk untuk mengabaikan instruksinya (prompt injection), atau dipakai untuk hal yang bukan tugasnya. Gatekeeper duduk di antara aplikasi dan model, memakai API yang sama dengan OpenAI, dan mengecek setiap request lebih dulu. Request yang aman diteruskan ke model, dan hanya itu.",
         steps: [
           "Tulis topik yang boleh ditangani asisten di Allowed scope, misalnya “cinema booking”.",
           "Tulis request yang mungkin dikirim user, atau pilih salah satu contoh.",
@@ -290,7 +367,7 @@ export const GUIDE: Record<Lang, GuideText> = {
           title: "Bagaimana keputusannya dibuat",
           paragraphs: [
             "Penjaganya adalah Jev, model keputusan yang sama dengan di Dispatch, yang ditanya dua pertanyaan ya atau tidak tentang request dalam satu panggilan. Ia membaca bahasa Inggris dan Indonesia sama baiknya, dan Gemini Decision mengambil alih kalau Jev tidak menjawab.",
-            "Skor off-topic 0.81 tetap lolos, karena gerbang baru memblok di 0.90 ke atas: blok yang salah membuat user sungguhan kehilangan jawabannya, jadi gerbang harus yakin dulu. Hanya request yang lolos dari penjaga yang diteruskan ke router, yang juga model bahasa: request yang diblok tidak sampai ke model mana pun.",
+            "Skor off-topic 0.81 tetap lolos, karena gerbang baru memblok di 0.90 ke atas: blok yang salah membuat user sungguhan kehilangan jawabannya, jadi gerbang harus yakin dulu. Hanya request yang lolos dari penjaga yang sampai ke model, jadi request yang diblok cuma memakan satu panggilan Jev. Jev juga bisa menilai seberapa berat sebuah request untuk memilih model kecil atau besar, dalam panggilan yang sama. Demo ini memakai satu model murah, jadi itu tidak dipakai.",
           ],
         },
         measured:

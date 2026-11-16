@@ -1,4 +1,4 @@
-/* Gatekeeper's console, inside the shared app shell: totals and the route split, the request console, the log */
+/* Gatekeeper's console, inside the shared app shell: the request console first, totals, what is behind the gate, the log */
 
 .gate-grid {
   display: grid;
@@ -19,56 +19,6 @@
 .gate-events {
   grid-column: 1 / -1;
   padding-bottom: 8px;
-}
-
-/* the route split: one bar, the accent for the small model, the muted chart grey for the strong one */
-.route-split-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-.route-split-head span {
-  flex: none;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.route-bar {
-  height: 12px;
-  border-radius: 3px;
-  background: var(--chart-muted);
-  overflow: hidden;
-}
-.route-bar i {
-  display: block;
-  height: 100%;
-  background: var(--chart-1);
-  transition: width var(--t-ui) var(--ease-out);
-}
-.route-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  margin-top: 10px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.route-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-}
-.dot.small {
-  background: var(--chart-1);
-}
-.dot.strong {
-  background: var(--chart-muted);
 }
 
 /* the console: first on the page and the one outlined panel, so the way to try the gate is seen first */

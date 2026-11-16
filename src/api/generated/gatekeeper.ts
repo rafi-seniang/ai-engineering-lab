@@ -125,9 +125,8 @@ export interface components {
       /**
        * Model
        * @default auto
-       * @enum {string}
        */
-      model: "auto" | "small" | "strong";
+      model: string;
       /**
        * Stream
        * @default false
@@ -167,10 +166,6 @@ export interface components {
       blocked: boolean;
       /** Blocked By */
       blocked_by?: ("injection" | "off_topic" | "tool_result" | "tool_call") | null;
-      /** Route */
-      route: ("small" | "strong") | null;
-      /** Difficulty */
-      difficulty: number | null;
       /** Masked Identifiers */
       masked_identifiers: number;
       /** Decision Ms */
@@ -189,16 +184,12 @@ export interface components {
       outcome: "answered" | "cached" | "blocked" | "failed";
       /** Blocked By */
       blocked_by?: ("injection" | "off_topic" | "tool_result" | "tool_call") | null;
-      /** Route */
-      route: ("small" | "strong") | null;
       /** Model */
       model: string | null;
       /** Injection Probability */
       injection_probability: number | null;
       /** Off Topic Probability */
       off_topic_probability?: number | null;
-      /** Difficulty */
-      difficulty: number | null;
       /** Masked Identifiers */
       masked_identifiers: number;
       /** Input Tokens */
@@ -229,16 +220,10 @@ export interface components {
       off_topic_blocked: number;
       /** Failed */
       failed: number;
-      /** Small Routed */
-      small_routed: number;
-      /** Strong Routed */
-      strong_routed: number;
       /** Masked Identifiers */
       masked_identifiers: number;
-      /** Small Tokens */
-      small_tokens: number;
-      /** Strong Tokens */
-      strong_tokens: number;
+      /** Tokens */
+      tokens: number;
       /** Median Decision Ms */
       median_decision_ms: number | null;
       /** Median Upstream Ms */

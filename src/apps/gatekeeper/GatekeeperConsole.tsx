@@ -37,7 +37,6 @@ const GATE_ICON = (
 );
 
 const milliseconds = (value: number | null | undefined) => (value == null ? NONE : `${Math.round(value)} ms`);
-const share = (part: number, whole: number) => (whole === 0 ? NONE : `${Math.round((part / whole) * 100)}%`);
 
 interface ConsoleResult {
   decision: GateDecision;
@@ -76,14 +75,6 @@ function DecisionLine({ result, cutoffs }: { result: ConsoleResult; cutoffs: Cut
           {offTopic.toFixed(2)} {ootBlocked ? "blocked" : "allowed"}
           <small>blocks at {cutoffs.offTopic.toFixed(2)}</small>
         </dd>
-      </div>
-      <div>
-        <dt>Route</dt>
-        <dd>{decision.route ?? NONE}</dd>
-      </div>
-      <div>
-        <dt>Difficulty</dt>
-        <dd>{decision.difficulty == null ? NONE : `${decision.difficulty.toFixed(2)} of 2`}</dd>
       </div>
       <div>
         <dt>Gate time</dt>
@@ -174,14 +165,15 @@ export function GatekeeperConsole() {
       }
     : DEFAULT_CUTOFFS;
   const totals = stats.data;
-  const routed = totals ? totals.small_routed + totals.strong_routed : 0;
   const offline = stats.isError && events.isError;
+  // The one model behind the gate, as the latest answered request names it
+  const answeredBy = events.data?.find((event) => event.outcome === "answered")?.model;
   let finding = "Reading the gate's log.";
   if (offline) finding = "Gatekeeper is not responding.";
   else if (totals && totals.requests === 0)
     finding = "No requests yet. Try one below or call the OpenAI-compatible endpoint.";
   else if (totals)
-    finding = `${totals.requests} requests: ${totals.blocked} blocked, ${totals.cached} from the cache, ${share(totals.small_routed, routed)} of the rest answered by the small model.`;
+    finding = `${totals.requests} requests: ${totals.blocked} blocked, ${totals.cached} from the cache, ${totals.answered} answered by the model.`;
 
   return (
     <AppShell
@@ -294,28 +286,20 @@ export function GatekeeperConsole() {
       </section>
 
       <div className="gate-grid">
-        <section className="panel gate-routes" aria-labelledby="routes-title">
-          <div className="route-split-head">
-            <h2 id="routes-title">Where answered requests went</h2>
-            <span>
-              small {totals?.small_routed ?? 0}, strong {totals?.strong_routed ?? 0}
-            </span>
-          </div>
-          <div className="route-bar" role="img" aria-label={`Small model ${share(totals?.small_routed ?? 0, routed)}`}>
-            <i style={{ width: routed ? `${((totals?.small_routed ?? 0) / routed) * 100}%` : "0%" }} />
-          </div>
-          <div className="route-legend">
-            <span>
-              <b className="dot small" /> Small model, {totals?.small_tokens ?? 0} tokens
-            </span>
-            <span>
-              <b className="dot strong" /> Strong model, {totals?.strong_tokens ?? 0} tokens
-            </span>
-          </div>
+        <section className="panel gate-behind" aria-labelledby="behind-title">
+          <h2 id="behind-title">Behind the gate</h2>
           <dl className="facts gate-facts">
             <div>
               <dt>Injection guard</dt>
               <dd>{meta.data?.engine ?? NONE}</dd>
+            </div>
+            <div>
+              <dt>Answered by</dt>
+              <dd>{answeredBy ?? NONE}</dd>
+            </div>
+            <div>
+              <dt>Tokens used</dt>
+              <dd>{totals?.tokens ?? NONE}</dd>
             </div>
             <div>
               <dt>Median model time</dt>
@@ -343,10 +327,8 @@ export function GatekeeperConsole() {
                 <tr>
                   <th>Request</th>
                   <th>Outcome</th>
-                  <th>Route</th>
                   <th className="n">Injection</th>
                   <th className="n">Off-topic</th>
-                  <th className="n">Difficulty</th>
                   <th className="n">Tokens</th>
                   <th className="n">Model time</th>
                 </tr>
@@ -362,10 +344,8 @@ export function GatekeeperConsole() {
                         {event.blocked_by === "off_topic" ? "off-topic" : event.outcome}
                       </span>
                     </td>
-                    <td>{event.route ?? NONE}</td>
                     <td className="n num">{event.injection_probability?.toFixed(2) ?? NONE}</td>
                     <td className="n num">{event.off_topic_probability?.toFixed(2) ?? NONE}</td>
-                    <td className="n num">{event.difficulty?.toFixed(2) ?? NONE}</td>
                     <td className="n num">
                       {event.input_tokens == null ? NONE : (event.input_tokens ?? 0) + (event.output_tokens ?? 0)}
                     </td>
