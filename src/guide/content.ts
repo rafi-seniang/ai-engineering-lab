@@ -103,11 +103,19 @@ export const GUIDE: Record<Lang, GuideText> = {
           thousand: "$0.05 to $0.10",
           speed: "0.3 to 0.6 s for one token",
         },
+        {
+          model: "Gemini 3.8 Flash",
+          input: "$0.75 (intro)",
+          output: "$3.75 (intro)",
+          thousand: "$0.26",
+          speed: "not measured here",
+        },
+        { model: "Gemini 4 Hydrogen", input: "$1.50", output: "$7.50", thousand: "$0.53", speed: "not measured here" },
         { model: "Claude Haiku 5.5", input: "$0.10", output: "$0.50", thousand: "$0.035", speed: "not measured here" },
         { model: "Claude Sonnet 5.5", input: "$2", output: "$10", thousand: "$0.70", speed: "not measured here" },
         { model: "Claude Fable 5.2", input: "$8", output: "$40", thousand: "$2.80", speed: "not measured here" },
       ],
-      note: "Prices from each provider's page on 16 Nov 2026 (DeepSeek is cheaper outside its peak hours). Speeds were measured from the lab's server in Jakarta: most of Jev's 0.2 s is the trip to TypeSafe's servers (its API lists one endpoint and no region to choose), so close to them Jev answers in tens of milliseconds.",
+      note: "Prices from each provider's page on 16 Nov 2026 (DeepSeek is cheaper outside its peak hours, and Gemini 3.8 Flash's introductory price runs until 31 Dec 2026, then $1.50 and $7.50). Gemini 4 Hydrogen thinks at a high level by default, and thinking tokens bill as output, so a real call costs more than its row. Speeds were measured from the lab's server in Jakarta: most of Jev's 0.2 s is the trip to TypeSafe's servers (its API lists one endpoint and no region to choose), so close to them Jev answers in tens of milliseconds.",
     },
     apps: [
       {
@@ -263,6 +271,20 @@ export const GUIDE: Record<Lang, GuideText> = {
           speed: "0,3 sampai 0,6 detik untuk satu token",
         },
         {
+          model: "Gemini 3.8 Flash",
+          input: "$0.75 (promo)",
+          output: "$3.75 (promo)",
+          thousand: "$0.26",
+          speed: "tidak diukur di sini",
+        },
+        {
+          model: "Gemini 4 Hydrogen",
+          input: "$1.50",
+          output: "$7.50",
+          thousand: "$0.53",
+          speed: "tidak diukur di sini",
+        },
+        {
           model: "Claude Haiku 5.5",
           input: "$0.10",
           output: "$0.50",
@@ -272,7 +294,7 @@ export const GUIDE: Record<Lang, GuideText> = {
         { model: "Claude Sonnet 5.5", input: "$2", output: "$10", thousand: "$0.70", speed: "tidak diukur di sini" },
         { model: "Claude Fable 5.2", input: "$8", output: "$40", thousand: "$2.80", speed: "tidak diukur di sini" },
       ],
-      note: "Harga dari halaman masing-masing penyedia per 16 Nov 2026 (DeepSeek lebih murah di luar jam sibuknya). Kecepatan diukur dari server lab di Jakarta: sebagian besar 0,2 detik Jev adalah perjalanan ke server TypeSafe (API-nya cuma punya satu endpoint, tanpa pilihan region), jadi kalau dekat dengan servernya Jev menjawab dalam puluhan milidetik.",
+      note: "Harga dari halaman masing-masing penyedia per 16 Nov 2026 (DeepSeek lebih murah di luar jam sibuknya, dan harga promo Gemini 3.8 Flash berlaku sampai 31 Des 2026, lalu $1.50 dan $7.50). Gemini 4 Hydrogen secara default berpikir di level tinggi, dan token thinking ditagih sebagai output, jadi panggilan sungguhan lebih mahal dari barisnya. Kecepatan diukur dari server lab di Jakarta: sebagian besar 0,2 detik Jev adalah perjalanan ke server TypeSafe (API-nya cuma punya satu endpoint, tanpa pilihan region), jadi kalau dekat dengan servernya Jev menjawab dalam puluhan milidetik.",
     },
     apps: [
       {
