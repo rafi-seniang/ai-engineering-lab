@@ -24,39 +24,45 @@ function Bars({ rows }: { rows: ExampleRow[] }) {
   );
 }
 
-/** One request through Gatekeeper: the guard and the router side by side, then the three ways out. */
+/** One request through Gatekeeper: the guard first, and only an allowed request goes on to the router. */
 function GateFlow({ flow }: { flow: GuideText["flow"] }) {
   return (
     <figure className="gd-flow" aria-label={flow.title}>
       <figcaption>{flow.title}</figcaption>
       <div className="gd-step">{flow.request}</div>
       <div className="gd-arrow" aria-hidden="true" />
-      <div className="gd-pair">
-        <span className="gd-together">{flow.together}</span>
-        <div className="gd-step gd-key">
-          <strong>{flow.guard}</strong>
-          <span>{flow.guardDetail}</span>
-        </div>
-        <div className="gd-step">
-          <strong>{flow.router}</strong>
-          <span>{flow.routerDetail}</span>
-        </div>
+      <div className="gd-step gd-key">
+        <strong>{flow.guard}</strong>
+        <span>{flow.guardDetail}</span>
       </div>
       <div className="gd-arrow" aria-hidden="true" />
       <div className="gd-step gd-question">{flow.question}</div>
       <div className="gd-arrow" aria-hidden="true" />
-      <div className="gd-outcomes">
+      <div className="gd-branches">
         <div className="gd-step gd-blocked">
           <strong>{flow.blocked}</strong>
           <span>{flow.blockedDetail}</span>
         </div>
-        <div className="gd-step">
-          <strong>{flow.small}</strong>
-          <span>{flow.smallDetail}</span>
-        </div>
-        <div className="gd-step">
-          <strong>{flow.strong}</strong>
-          <span>{flow.strongDetail}</span>
+        <div className="gd-branch">
+          <div className="gd-step">
+            <strong>{flow.allowed}</strong>
+          </div>
+          <div className="gd-arrow" aria-hidden="true" />
+          <div className="gd-step">
+            <strong>{flow.router}</strong>
+            <span>{flow.routerDetail}</span>
+          </div>
+          <div className="gd-arrow" aria-hidden="true" />
+          <div className="gd-outcomes">
+            <div className="gd-step">
+              <strong>{flow.small}</strong>
+              <span>{flow.smallDetail}</span>
+            </div>
+            <div className="gd-step">
+              <strong>{flow.strong}</strong>
+              <span>{flow.strongDetail}</span>
+            </div>
+          </div>
         </div>
       </div>
       <p className="gd-after">{flow.after}</p>
