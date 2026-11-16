@@ -3,11 +3,15 @@ import { backendUrl, projectById } from "../lab/projects";
 import type { components, paths } from "./generated/gatekeeper";
 
 /** Typed client for the Gatekeeper backend. Paths, bodies and responses come from its OpenAPI schema. */
-export const gatekeeper = createClient<paths>({ baseUrl: backendUrl(projectById("gatekeeper")) });
+export const gatekeeper = createClient<paths>({
+  baseUrl: backendUrl(projectById("gatekeeper")),
+  fetch: (request) => globalThis.fetch(request),
+});
 
 export type GateDecision = components["schemas"]["GateDecision"];
 export type GateEvent = components["schemas"]["GateEvent"];
 export type GateStats = components["schemas"]["GateStats"];
+export type NamedScope = components["schemas"]["NamedScope"];
 
 export interface GateAnswer {
   choices: { message: { content: string } }[];
