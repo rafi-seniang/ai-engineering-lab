@@ -6,6 +6,7 @@ import { GatekeeperConsole } from "./apps/gatekeeper/GatekeeperConsole";
 import { LedgerBook } from "./apps/ledger/LedgerBook";
 import { LensSearch } from "./apps/lens/LensSearch";
 import { PilahInbox } from "./apps/pilah/PilahInbox";
+import { Guide } from "./guide/Guide";
 import { Lobby } from "./lobby/Lobby";
 import { NotFound } from "./NotFound";
 import "./styles/brand.css";
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
   { path: "/pilah", element: <PilahInbox /> },
   { path: "/gatekeeper", element: <GatekeeperConsole /> },
   { path: "/lens", element: <LensSearch /> },
+  { path: "/guide", element: <Guide /> },
   { path: "/ledger", element: <LedgerBook /> },
   { path: "*", element: <NotFound /> },
 ]);

@@ -10,7 +10,6 @@ export const lens = createClient<paths>({ baseUrl, fetch: (request) => globalThi
 export type Photograph = components["schemas"]["Photograph"];
 export type SearchResult = components["schemas"]["SearchResult"];
 export type IngestResult = components["schemas"]["IngestResult"];
-export type Mode = NonNullable<NonNullable<paths["/v1/search"]["get"]["parameters"]["query"]>["mode"]>;
 export type OriginFilter = NonNullable<NonNullable<paths["/v1/search"]["get"]["parameters"]["query"]>["origin"]>;
 
 /** The backend serves the photographs themselves next to its API. */

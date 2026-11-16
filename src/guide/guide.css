@@ -1,0 +1,334 @@
+/* The guide: the lab's stone ground and white cards, one reading column of 960px, teal for the one way forward. */
+
+.gd {
+  min-height: 100svh;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 40px) 80px;
+  color: var(--brand-ink);
+}
+.gd :where(h1, h2, h3, p, ol, ul, blockquote, figure) {
+  margin: 0;
+}
+
+.gd-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 0;
+}
+.gd-back {
+  color: var(--brand-soft-ink);
+  text-decoration: none;
+}
+.gd-back::before {
+  content: "\2190\00a0";
+}
+.gd-back:hover {
+  color: var(--brand-ink);
+}
+.gd-langs {
+  display: inline-flex;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  background: var(--brand-surface);
+}
+.gd-langs button {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--brand-soft-ink);
+  cursor: pointer;
+}
+.gd-langs button[aria-pressed="true"] {
+  background: var(--brand-ink);
+  color: #fff;
+}
+
+.gd-main {
+  display: grid;
+  gap: 20px;
+}
+.gd-main h1 {
+  font-size: clamp(28px, 3vw, 36px);
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.gd-lead {
+  max-width: 680px;
+  color: var(--brand-soft-ink);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.gd-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.gd-toc a {
+  padding: 6px 14px;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  background: var(--brand-surface);
+  color: var(--brand-ink);
+  text-decoration: none;
+}
+.gd-toc a:hover {
+  border-color: var(--brand-ink);
+}
+
+/* one app */
+.gd-app {
+  display: grid;
+  gap: 24px;
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid var(--brand-border);
+  border-radius: 16px;
+  background: var(--brand-surface);
+  scroll-margin-top: 16px;
+}
+.gd-app-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.gd-app h2 {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+.gd-tagline {
+  margin-top: 6px;
+  max-width: 640px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.gd-open {
+  flex: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--brand-accent);
+  color: #fff;
+  font-weight: 500;
+  text-decoration: none;
+}
+.gd-open:hover {
+  background: var(--brand-accent-strong);
+}
+.gd-app h3 {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--brand-soft-ink);
+}
+.gd-app p,
+.gd-app li {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.gd-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 28px;
+}
+.gd-use p + h3 {
+  margin-top: 20px;
+}
+.gd-use ol {
+  display: grid;
+  gap: 6px;
+  padding-left: 20px;
+}
+.gd-example {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--brand-paper);
+}
+.gd-example h3 {
+  margin-bottom: 0;
+}
+.gd-example blockquote {
+  padding-left: 12px;
+  border-left: 3px solid var(--brand-border);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.gd-outcome {
+  font-weight: 500;
+}
+.gd-bars {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gd-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 36px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.gd-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--brand-pale);
+  overflow: hidden;
+}
+.gd-bar i {
+  display: block;
+  height: 100%;
+  background: var(--brand-accent);
+}
+.gd-bars b {
+  text-align: right;
+  font-weight: 600;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.gd-tech {
+  display: grid;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--brand-border);
+}
+.gd-tech p {
+  max-width: 760px;
+}
+.gd-measured {
+  margin-top: 4px;
+  color: var(--brand-soft-ink);
+}
+.gd-measured b {
+  color: var(--brand-ink);
+}
+
+/* Gatekeeper's flow: boxes top to bottom, the guard and router side by side, three ways out */
+.gd-flow {
+  display: grid;
+  justify-items: center;
+  margin: 12px 0 4px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--brand-paper);
+}
+.gd-flow figcaption {
+  justify-self: start;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-soft-ink);
+}
+.gd-step {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  max-width: 420px;
+  padding: 12px 14px;
+  border: 1px solid var(--brand-border);
+  border-radius: 10px;
+  background: var(--brand-surface);
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: center;
+}
+.gd-step strong {
+  font-size: 14px;
+}
+.gd-step span {
+  color: var(--brand-soft-ink);
+  font-size: 13px;
+}
+.gd-key {
+  border-color: var(--brand-accent);
+}
+.gd-question {
+  border-style: dashed;
+  border-color: var(--brand-ink);
+  font-weight: 600;
+}
+.gd-arrow {
+  width: 2px;
+  height: 22px;
+  background: var(--brand-soft-ink);
+  position: relative;
+}
+.gd-arrow::after {
+  content: "";
+  position: absolute;
+  left: -4px;
+  bottom: -2px;
+  border: 5px solid transparent;
+  border-top-color: var(--brand-soft-ink);
+  border-bottom: 0;
+}
+.gd-pair,
+.gd-outcomes {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+.gd-pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 760px;
+  position: relative;
+  padding-top: 22px;
+}
+.gd-together {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  color: var(--brand-soft-ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.gd-pair .gd-step,
+.gd-outcomes .gd-step {
+  max-width: none;
+}
+.gd-outcomes {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.gd-blocked {
+  border-color: #c4242a;
+}
+.gd-blocked strong {
+  color: #c4242a;
+}
+.gd-after {
+  max-width: 620px;
+  margin-top: 14px;
+  color: var(--brand-soft-ink);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .gd-columns,
+  .gd-pair,
+  .gd-outcomes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gd-app-head {
+    flex-direction: column;
+  }
+  .gd-langs button {
+    padding: 6px 10px;
+  }
+}

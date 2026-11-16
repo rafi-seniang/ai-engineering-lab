@@ -103,6 +103,10 @@ export function Lobby() {
               ))}
             </figcaption>
           </figure>
+          <Link className="lb-guide" to="/guide">
+            <strong>How the apps work</strong>
+            <span>What Dispatch, Lens and Gatekeeper do, how to try them, and the technology underneath</span>
+          </Link>
         </section>
 
         <section className="lb-board" aria-labelledby="projects-heading">

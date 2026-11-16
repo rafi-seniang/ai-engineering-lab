@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { expect, test, vi } from "vitest";
+import { Guide } from "../guide/Guide";
 import { LedgerBook } from "./ledger/LedgerBook";
 import { LensSearch } from "./lens/LensSearch";
 import { PilahInbox } from "./pilah/PilahInbox";
@@ -254,9 +255,21 @@ test("Dispatch sorts a batch of uploaded images with Jev, chosen in the sidebar"
   const grid = screen.getByRole("list", { name: "Queued images" });
   expect(within(grid).getByText("A · 0.95")).toBeInTheDocument();
   expect(within(grid).getByText("B · 0.91")).toBeInTheDocument();
+
+  // Each input keeps its own rule: Text brings back the text preset, Images the image preset
+  const prompt = screen.getByLabelText("Prompt");
+  expect(prompt).toHaveValue(
+    "Inspect this image and decide which choice (A, B, or C) best matches its primary subject.",
+  );
+  await userEvent.click(screen.getByRole("button", { name: /^Text/ }));
+  expect(prompt).toHaveValue("Read the paragraph and pick which choice (A, B, or C) matches its main topic.");
+  await userEvent.click(screen.getByRole("button", { name: /^Images/ }));
+  expect(prompt).toHaveValue(
+    "Inspect this image and decide which choice (A, B, or C) best matches its primary subject.",
+  );
 });
 
-test("Lens runs semantic Typesense search and indexes uploaded user pictures into the database", async () => {
+test("Lens shows pictures only, searches by meaning and indexes uploads without labels", async () => {
   const dog = {
     id: "908149",
     title: "[Dog with Duck in Mouth]",
@@ -304,7 +317,6 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
           uploaded: hasUploaded ? 1 : 0,
           archive: 271,
           vector_store: "typesense",
-          subjects: [{ subject: "Dogs", photographs: 19 }],
           model: "gemini-embedding-2",
           dimensions: 768,
           source: "The Metropolitan Museum of Art",
@@ -326,7 +338,7 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
           query: "surfing",
           mode: "picture",
           took_ms: 42.1,
-          hits: [{ photograph: dog, score: 0.78, in_caption: false }],
+          hits: [{ photograph: dog, score: 0.78 }],
         });
       }
       if (url.endsWith("/v1/photographs") && method === "POST") {
@@ -343,9 +355,9 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
       if (url.includes("/v1/photographs?") && method === "GET") {
         return jsonResponse({
           query: "*",
-          mode: "recent",
+          mode: "browse",
           took_ms: 3.4,
-          hits: hasUploaded ? [{ photograph: uploadedPhoto, score: 1, in_caption: false }] : [],
+          hits: hasUploaded ? [{ photograph: uploadedPhoto, score: 1 }] : [],
         });
       }
       if (url.includes("/similar")) {
@@ -361,30 +373,36 @@ test("Lens runs semantic Typesense search and indexes uploaded user pictures int
   );
 
   renderAt("/lens", <LensSearch />);
-  expect(await screen.findByText(/1 photographs for “surfing”\. None names it in its caption/)).toBeInTheDocument();
+  const result = await screen.findByRole("button", { name: "Result 1, similarity 0.78" });
+  // The picture alone: no title, date or tag on the page
+  expect(screen.queryByText("[Dog with Duck in Mouth]")).not.toBeInTheDocument();
+  expect(screen.queryByText("1860s")).not.toBeInTheDocument();
+  expect(screen.queryByText("Subjects")).not.toBeInTheDocument();
   expect(screen.getByText(/gemini-embedding-2 · 271 archive/)).toBeInTheDocument();
   expect(screen.getByText(/Picture searches and uploads use Google AI Studio's free tier/)).toBeInTheDocument();
-  expect(searchUrls[0]).toContain("mode=picture");
+  expect(searchUrls[0]).not.toContain("mode=");
+  await userEvent.click(result);
+  const opened = await screen.findByRole("complementary", { name: "Selected picture" });
+  expect(within(opened).queryByText("Samuel Root")).not.toBeInTheDocument();
+  expect(within(opened).getByRole("link", { name: "Source and licence" })).toBeInTheDocument();
 
   const searchInput = screen.getByRole("searchbox");
   await userEvent.clear(searchInput);
   await userEvent.type(searchInput, "spaceship{Enter}");
-  expect(await screen.findByText(/No photographs matched “spaceship”/)).toBeInTheDocument();
+  expect(await screen.findByText(/Nothing in the collection is close enough to “spaceship”/)).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Add to database" }));
-  expect(
-    screen.getByText(/Pictures use Google AI Studio's free tier, so uploads are sent to Google\./),
-  ).toBeInTheDocument();
+  expect(screen.getByText(/no title or tag, since search finds them by what they show/)).toBeInTheDocument();
   const fileInput = screen.getByLabelText("Choose images to index");
   const testFile = new File([new Uint8Array([137, 80, 78, 71])], "desk.png", { type: "image/png" });
   await userEvent.upload(fileInput, testFile);
-  await userEvent.type(screen.getByLabelText("Title (optional)"), "Desk Prototype");
+  expect(screen.queryByLabelText("Title (optional)")).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Save to Typesense" }));
 
   expect(await screen.findByText(/Indexed 1 picture into Typesense/)).toBeInTheDocument();
-  const detail = await screen.findByRole("complementary", { name: "Selected photograph" });
-  expect(within(detail).getByText("Desk Prototype")).toBeInTheDocument();
-  expect(within(detail).getByText("Stored in Typesense")).toBeInTheDocument();
+  const detail = await screen.findByRole("complementary", { name: "Selected picture" });
+  expect(within(detail).queryByText("Desk Prototype")).not.toBeInTheDocument();
+  expect(within(detail).getByText("Your upload, stored in Typesense")).toBeInTheDocument();
   expect(within(detail).getByRole("button", { name: "Remove from database" })).toBeInTheDocument();
 });
 
@@ -481,4 +499,14 @@ test("Ledger flags arithmetic errors in code and switches to the bank statement"
   await userEvent.click(screen.getByRole("tab", { name: /Bank statement/ }));
   const statement = await screen.findByRole("region", { name: "Bank statement" });
   expect(within(statement).getByText("TRF KE KEMASAN HIJAU")).toBeInTheDocument();
+});
+
+test("the guide opens in English and switches to Indonesian", async () => {
+  renderAt("/guide", <Guide />);
+  expect(screen.getByRole("heading", { level: 1, name: "How the apps work" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 2, name: "Gatekeeper" })).toBeInTheDocument();
+  expect(screen.getByText("Injection or off-topic at 0.90 or above?")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Bahasa Indonesia" }));
+  expect(screen.getByRole("heading", { level: 1, name: "Cara kerja aplikasinya" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Buka Lens" })).toHaveAttribute("href", "/lens");
 });
