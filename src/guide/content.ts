@@ -32,7 +32,7 @@ export interface GuideText {
     guardDetail: string;
     router: string;
     routerDetail: string;
-    together: string;
+    allowed: string;
     question: string;
     blocked: string;
     blockedDetail: string;
@@ -61,13 +61,13 @@ export const GUIDE: Record<Lang, GuideText> = {
       router: "Router",
       routerDetail:
         "DeepSeek rates how much reasoning a good answer needs, from 0 to 2, by reading the probabilities of one answer token.",
-      together: "Both start at the same moment",
+      allowed: "No: allowed",
       question: "Injection or off-topic at 0.90 or above?",
       blocked: "Yes: blocked",
-      blockedDetail: "Answered 403 with the reason. No model ever sees it, and the router's answer is dropped.",
-      small: "No, difficulty under 1.0",
+      blockedDetail: "Answered 403 with the reason. No language model ever sees it, not even the router.",
+      small: "Difficulty under 1.0",
       smallDetail: "Small model: deepseek-flash",
-      strong: "No, difficulty 1.0 or more",
+      strong: "Difficulty 1.0 or more",
       strongDetail: "Strong model: deepseek-v4-pro",
       after:
         "The answer is cached, and any tool call the model asks for is checked against what the user asked before it goes back.",
@@ -163,7 +163,7 @@ export const GUIDE: Record<Lang, GuideText> = {
           title: "How the decision is made",
           paragraphs: [
             "The guard is Jev, the same decision model as in Dispatch, asked two yes-or-no questions about the request in one call. It reads English and Indonesian alike, and Gemini Decision takes over if Jev does not answer.",
-            "A score of 0.81 off-topic is still allowed, because the gate blocks only at 0.90 or above: a wrong block costs a real user their answer, so the gate needs to be sure. The guard and the router run at the same time, so an allowed request waits about one second, not two.",
+            "A score of 0.81 off-topic is still allowed, because the gate blocks only at 0.90 or above: a wrong block costs a real user their answer, so the gate needs to be sure. Only a request the guard allows goes on to the router, which is itself a language model: a blocked request reaches no model at all.",
           ],
         },
         measured:
@@ -186,13 +186,13 @@ export const GUIDE: Record<Lang, GuideText> = {
       router: "Router",
       routerDetail:
         "DeepSeek menilai seberapa berat penalaran yang dibutuhkan, dari 0 sampai 2, dengan membaca probabilitas satu token jawaban.",
-      together: "Keduanya mulai bersamaan",
+      allowed: "Tidak: lolos",
       question: "Injeksi atau off-topic 0.90 ke atas?",
       blocked: "Ya: diblok",
-      blockedDetail: "Dijawab 403 beserta alasannya. Tidak ada model yang melihatnya, dan jawaban router dibuang.",
-      small: "Tidak, tingkat kesulitan di bawah 1.0",
+      blockedDetail: "Dijawab 403 beserta alasannya. Tidak ada model bahasa yang melihatnya, router pun tidak.",
+      small: "Tingkat kesulitan di bawah 1.0",
       smallDetail: "Model kecil: deepseek-flash",
-      strong: "Tidak, tingkat kesulitan 1.0 ke atas",
+      strong: "Tingkat kesulitan 1.0 ke atas",
       strongDetail: "Model besar: deepseek-v4-pro",
       after:
         "Jawabannya di-cache, dan setiap tool call dari model dicek terhadap permintaan user sebelum dikembalikan.",
@@ -290,7 +290,7 @@ export const GUIDE: Record<Lang, GuideText> = {
           title: "Bagaimana keputusannya dibuat",
           paragraphs: [
             "Penjaganya adalah Jev, model keputusan yang sama dengan di Dispatch, yang ditanya dua pertanyaan ya atau tidak tentang request dalam satu panggilan. Ia membaca bahasa Inggris dan Indonesia sama baiknya, dan Gemini Decision mengambil alih kalau Jev tidak menjawab.",
-            "Skor off-topic 0.81 tetap lolos, karena gerbang baru memblok di 0.90 ke atas: blok yang salah membuat user sungguhan kehilangan jawabannya, jadi gerbang harus yakin dulu. Penjaga dan router jalan bersamaan, jadi request yang lolos menunggu sekitar satu detik, bukan dua.",
+            "Skor off-topic 0.81 tetap lolos, karena gerbang baru memblok di 0.90 ke atas: blok yang salah membuat user sungguhan kehilangan jawabannya, jadi gerbang harus yakin dulu. Hanya request yang lolos dari penjaga yang diteruskan ke router, yang juga model bahasa: request yang diblok tidak sampai ke model mana pun.",
           ],
         },
         measured:
