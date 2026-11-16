@@ -189,3 +189,70 @@
     min-width: 760px;
   }
 }
+
+/* Used by apps: one panel per named scope, its text, the questions Jev is asked, the latest checks */
+.gate-app {
+  display: grid;
+  gap: 14px;
+  margin-bottom: var(--gap);
+}
+.gate-app code {
+  font-size: 0.95em;
+}
+.gate-scope-text {
+  margin: 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--raised);
+  line-height: 1.55;
+}
+.gate-sub {
+  margin-top: 6px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+.gate-questions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+}
+.gate-question {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+.gate-question header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.gate-question h3 {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+.gate-question p,
+.gate-question dd {
+  line-height: 1.5;
+}
+.gate-question dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.gate-question dt {
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+.gate-question dd {
+  margin: 2px 0 0;
+}
+@media (max-width: 900px) {
+  .gate-questions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
