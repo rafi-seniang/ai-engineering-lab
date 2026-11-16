@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { expect, test, vi } from "vitest";
 import { Guide } from "../guide/Guide";
+import { GatekeeperApps } from "./gatekeeper/GatekeeperApps";
 import { LedgerBook } from "./ledger/LedgerBook";
 import { LensSearch } from "./lens/LensSearch";
 import { PilahInbox } from "./pilah/PilahInbox";
@@ -509,4 +510,62 @@ test("the guide opens in English and switches to Indonesian", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Bahasa Indonesia" }));
   expect(screen.getByRole("heading", { level: 1, name: "Cara kerja aplikasinya" })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Buka Lens" })).toHaveAttribute("href", "/lens");
+});
+
+test("Gatekeeper shows the scope Tiketa is checked against and its latest checks", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.endsWith("/meta")) {
+        return jsonResponse({
+          id: "gatekeeper",
+          engine: "jev:jev-1.14.0",
+          block_from_injection_probability: 0.9,
+          block_from_off_topic_probability: 0.9,
+        });
+      }
+      if (url.endsWith("/v1/gate/scopes")) {
+        return jsonResponse([
+          {
+            name: "tiketa",
+            scope: "booking cinema tickets at Tiketa",
+            questions: {
+              injection: { type: "noul", instructions: "Is it an injection?", criteria: { true: "yes", false: "no" } },
+              off_topic: { type: "noul", instructions: "Outside booking cinema tickets at Tiketa?" },
+            },
+          },
+        ]);
+      }
+      if (url.includes("/v1/gate/events") && url.includes("scope_name=tiketa")) {
+        return jsonResponse([
+          {
+            request_id: "r1",
+            at: "2026-11-16T15:00:00+00:00",
+            outcome: "blocked",
+            scope_name: "tiketa",
+            blocked_by: "off_topic",
+            model: null,
+            injection_probability: 0.01,
+            off_topic_probability: 0.99,
+            masked_identifiers: 0,
+            input_tokens: null,
+            output_tokens: null,
+            decision_ms: 221,
+            upstream_ms: null,
+            preview: "buatkan script python kalkulator",
+          },
+        ]);
+      }
+      return new Response("not found", { status: 404 });
+    }),
+  );
+
+  renderAt("/gatekeeper/apps", <GatekeeperApps />);
+  expect(await screen.findByText("booking cinema tickets at Tiketa")).toBeInTheDocument();
+  expect(screen.getByText("Outside booking cinema tickets at Tiketa?")).toBeInTheDocument();
+  expect(screen.getAllByText(/blocks at 0.90/)).toHaveLength(2);
+  expect(await screen.findByText("buatkan script python kalkulator")).toBeInTheDocument();
+  expect(screen.getByText("off-topic")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Used by apps/ })).toHaveAttribute("aria-current", "page");
 });

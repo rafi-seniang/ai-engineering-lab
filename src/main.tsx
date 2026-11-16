@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
+import { GatekeeperApps } from "./apps/gatekeeper/GatekeeperApps";
 import { GatekeeperConsole } from "./apps/gatekeeper/GatekeeperConsole";
 import { LedgerBook } from "./apps/ledger/LedgerBook";
 import { LensSearch } from "./apps/lens/LensSearch";
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
   { path: "/dispatch", element: <PilahInbox /> },
   { path: "/pilah", element: <PilahInbox /> },
   { path: "/gatekeeper", element: <GatekeeperConsole /> },
+  { path: "/gatekeeper/apps", element: <GatekeeperApps /> },
   { path: "/lens", element: <LensSearch /> },
   { path: "/guide", element: <Guide /> },
   { path: "/ledger", element: <LedgerBook /> },
