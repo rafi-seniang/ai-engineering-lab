@@ -103,9 +103,16 @@ export function Lobby() {
               ))}
             </figcaption>
           </figure>
-          <Link className="lb-guide" to="/guide">
-            <strong>How the apps work</strong>
-            <span>What Dispatch, Lens and Gatekeeper do, how to try them, and the technology underneath</span>
+          <Link className="lb-card is-on lb-guide" to="/guide">
+            <span className="lb-card-top">
+              <span className="lb-card-title">
+                <strong>How the apps work</strong>
+              </span>
+              <span className="lb-open">Read</span>
+            </span>
+            <span className="lb-card-summary">
+              What Dispatch, Lens and Gatekeeper do, how to try them, and the technology underneath
+            </span>
           </Link>
         </section>
 
