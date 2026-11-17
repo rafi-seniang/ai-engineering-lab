@@ -18,14 +18,24 @@ export type SortResponse = components["schemas"]["SortResponse"];
 export type TriageDecision = components["schemas"]["TriageDecision"];
 export type TriagedMessage = components["schemas"]["TriagedMessage"];
 
+type ValidationIssue = { loc?: (string | number)[]; msg?: string };
+
+/** A 422 detail is a list of issues: each becomes "field: message". */
+function describe(detail: unknown, status: number): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return (detail as ValidationIssue[])
+      .map((issue) => `${issue.loc?.slice(1).join(".") ?? ""}: ${issue.msg ?? "invalid"}`)
+      .join(". ");
+  }
+  return `Dispatch answered ${status}`;
+}
+
 /** Raises with the service's own message, so a screen can say what failed. */
 export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
   if (result.data === undefined) {
-    const detail =
-      typeof result.error === "object" && result.error !== null && "detail" in result.error
-        ? String((result.error as { detail: unknown }).detail)
-        : `Pilah answered ${result.response.status}`;
-    throw new Error(detail);
+    const detail = (result.error as { detail?: unknown } | undefined)?.detail;
+    throw new Error(describe(detail, result.response.status));
   }
   return result.data;
 }
