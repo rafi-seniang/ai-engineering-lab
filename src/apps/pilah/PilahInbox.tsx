@@ -758,7 +758,7 @@ export function PilahInbox() {
     ? error
     : activeRun
       ? `Last prediction: ${activeRun.result.choice} (${probability(activeRun.result.top_probability)}) in ${Math.round(activeRun.latencyMs)} ms via ${activeRun.engine} (${activeRun.result.checkpoint}).`
-      : "Write your own prompt and choices, then sort any paragraph or up to 10 images with calibrated probabilities.";
+      : "Write your own prompt and choices, then sort any paragraph or up to 10 images, with a probability for each choice.";
 
   return (
     <AppShell

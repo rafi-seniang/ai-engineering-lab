@@ -19,7 +19,7 @@
     "group": "Language",
     "engine": "Jev + Gemini Decision 1",
     "route": "/dispatch",
-    "summary": "Makes very fast, accurate decisions from messy text or images into custom prompt-defined choices, with calibrated probabilities.",
+    "summary": "Makes very fast, accurate decisions from messy text or images into custom prompt-defined choices, with a probability for each choice.",
     "picture": "pilah-sorting-mail-1910",
     "caption": "Configurable System 1 decision router"
   },
