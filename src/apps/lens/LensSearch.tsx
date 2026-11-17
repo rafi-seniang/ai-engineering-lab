@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type DragEvent, type FormEvent, useEffect, useState } from "react";
+import { type CSSProperties, type DragEvent, type FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { imageUrl, lens, type OriginFilter, type Photograph, type SearchResult, unwrap } from "../../api/lens";
 import { AppShell } from "../shared/AppShell";
@@ -13,6 +13,8 @@ const ORIGINS: { value: OriginFilter; label: string }[] = [
   { value: "met", label: "Curated archive" },
 ];
 const ROW_HEIGHT = 168;
+// Enough for the whole archive (239) and recent uploads in one listing
+const ALL_PICTURES_LIMIT = 250;
 const SIMILAR_COUNT = 6;
 
 function Mark({ size }: { size: number }) {
@@ -38,6 +40,25 @@ const DATABASE_ICON = (
     <path d="M2.5 8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2" />
   </svg>
 );
+
+const GRID_ICON = (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+    <rect x="2" y="2" width="5" height="5" rx="1" />
+    <rect x="9" y="2" width="5" height="5" rx="1" />
+    <rect x="2" y="9" width="5" height="5" rx="1" />
+    <rect x="9" y="9" width="5" height="5" rx="1" />
+  </svg>
+);
+
+/** The archive's subject is its first tag, uploads have none. */
+function bySubject(hits: SearchResult["hits"]): Map<string, SearchResult["hits"]> {
+  const groups = new Map<string, SearchResult["hits"]>();
+  for (const hit of hits) {
+    const subject = hit.photograph.origin === "upload" ? "Your uploads" : (hit.photograph.tags[0] ?? "Other");
+    groups.set(subject, [...(groups.get(subject) ?? []), hit]);
+  }
+  return groups;
+}
 
 /** Pictures only: no title, date or tag is shown, because the search never reads them either. */
 function Gallery({
@@ -68,7 +89,7 @@ function Gallery({
               title={label}
               onClick={() => onSelect(photograph)}
             >
-              <img src={imageUrl(photograph)} alt="" loading="lazy" style={{ aspectRatio: `${ratio}` }} />
+              <img src={imageUrl(photograph)} alt="" loading="lazy" style={{ "--ratio": ratio } as CSSProperties} />
             </button>
           </li>
         );
@@ -153,6 +174,7 @@ export function LensSearch() {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const uploadsView = params.get("view") === "uploads";
+  const allView = params.get("view") === "all";
   const query = params.get("q") ?? DEFAULT_QUERY;
   const origin = (ORIGINS.find((option) => option.value === params.get("origin"))?.value ?? "all") as OriginFilter;
   const selectedId = params.get("photo");
@@ -201,10 +223,16 @@ export function LensSearch() {
       unwrap(await lens.GET("/v1/photographs", { params: { query: { origin: "upload", limit: 48 } } })),
     enabled: uploadsView && upload === null,
   });
+  const allQuery = useQuery({
+    queryKey: ["lens", "all"],
+    queryFn: async () =>
+      unwrap(await lens.GET("/v1/photographs", { params: { query: { origin: "all", limit: ALL_PICTURES_LIMIT } } })),
+    enabled: allView && upload === null,
+  });
   const textSearch = useQuery({
     queryKey: ["lens", "search", query, origin],
     queryFn: async () => unwrap(await lens.GET("/v1/search", { params: { query: { q: query, origin } } })),
-    enabled: !uploadsView && upload === null,
+    enabled: !uploadsView && !allView && upload === null,
   });
   const pictureSearch = useQuery({
     queryKey: ["lens", "picture", upload?.name, upload?.size, upload?.lastModified, origin],
@@ -222,7 +250,7 @@ export function LensSearch() {
       ),
     enabled: upload !== null,
   });
-  const search = upload ? pictureSearch : uploadsView ? browseQuery : textSearch;
+  const search = upload ? pictureSearch : uploadsView ? browseQuery : allView ? allQuery : textSearch;
 
   useEffect(() => {
     const hits = search.data?.hits ?? [];
@@ -338,11 +366,14 @@ export function LensSearch() {
   const offline = collection.isError && search.isError;
   const selected = selectedId ? known.get(selectedId) : undefined;
   const browsing = uploadsView && upload === null;
+  const browsingAll = allView && upload === null;
   const sub = offline
     ? "Lens is not responding."
     : search.isError
       ? "The search failed. Try again."
-      : "Found by what each picture shows. No title, caption or tag is read.";
+      : browsingAll
+        ? "Everything in the database, grouped by the archive's subjects. The subjects only help you pick words: search never reads them."
+        : "Found by what each picture shows. No title, caption or tag is read.";
 
   const storeName = collection.data?.vector_store || "Typesense 27.1";
   const scopeDetail = collection.data
@@ -353,7 +384,13 @@ export function LensSearch() {
     : upload
       ? "No picture in the collection looks close enough to yours."
       : `Nothing in the collection is close enough to “${query}”. Try other words or a picture.`;
-  const pageTitle = upload ? "Your picture" : browsing ? "Database uploads" : `“${query}”`;
+  const pageTitle = upload
+    ? "Your picture"
+    : browsing
+      ? "Database uploads"
+      : browsingAll
+        ? "All pictures"
+        : `“${query}”`;
 
   return (
     <AppShell
@@ -365,7 +402,14 @@ export function LensSearch() {
         detail: scopeDetail,
       }}
       nav={[
-        { label: "Search", to: "/lens", icon: SEARCH_ICON, current: !uploadsView },
+        { label: "Search", to: "/lens", icon: SEARCH_ICON, current: !uploadsView && !allView },
+        {
+          label: "All pictures",
+          to: "/lens?view=all",
+          icon: GRID_ICON,
+          count: collection.data?.photographs,
+          current: allView,
+        },
         {
           label: "Database uploads",
           to: "/lens?view=uploads",
@@ -493,7 +537,7 @@ export function LensSearch() {
         </form>
       )}
 
-      {!browsing && (
+      {!browsing && !browsingAll && (
         <div className="filters lens-toolbar">
           <fieldset className="segmented lens-origins">
             <legend className="visually-hidden">Source filter</legend>
@@ -539,6 +583,22 @@ export function LensSearch() {
                 </li>
               ))}
             </ul>
+          ) : search.data && browsingAll ? (
+            [...bySubject(search.data.hits)].map(([subject, hits]) => (
+              <section key={subject} className="lens-subject" aria-label={subject}>
+                <header>
+                  <h2>
+                    {subject} <span className="meta">{hits.length}</span>
+                  </h2>
+                  {subject !== "Your uploads" && (
+                    <button type="button" className="btn ghost" onClick={() => searchFor(subject)}>
+                      Search “{subject}”
+                    </button>
+                  )}
+                </header>
+                <Gallery result={{ ...search.data, hits }} selected={selectedId} emptyCopy="" onSelect={select} />
+              </section>
+            ))
           ) : search.data ? (
             <Gallery result={search.data} selected={selectedId} emptyCopy={emptyCopy} onSelect={select} />
           ) : (

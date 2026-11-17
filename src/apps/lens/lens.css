@@ -191,6 +191,7 @@
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: var(--ratio);
   object-fit: cover;
   border-radius: 4px;
   background: var(--raised);
@@ -291,4 +292,44 @@
 
 .lens-privacy {
   margin-top: 24px;
+}
+
+.lens-subject + .lens-subject {
+  margin-top: 28px;
+}
+
+.lens-subject header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.lens-subject h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.lens-subject h2 .meta {
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+/* on a phone the full listing is a grid of small squares, so 240 pictures stay a short scroll */
+@media (max-width: 640px) {
+  .lens-subject .lens-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .lens-subject .lens-gallery::after {
+    content: none;
+  }
+  .lens-subject .lens-card img {
+    aspect-ratio: 1;
+  }
+  .lens-subject header {
+    flex-wrap: wrap;
+  }
 }
