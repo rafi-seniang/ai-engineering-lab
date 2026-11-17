@@ -373,7 +373,7 @@ test("Lens shows pictures only, searches by meaning and indexes uploads without 
     }),
   );
 
-  renderAt("/lens", <LensSearch />);
+  renderAt("/lens?q=surfing", <LensSearch />);
   const result = await screen.findByRole("button", { name: "Result 1, similarity 0.78" });
   // The picture alone: no title, date or tag on the page
   expect(screen.queryByText("[Dog with Duck in Mouth]")).not.toBeInTheDocument();
