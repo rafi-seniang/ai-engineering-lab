@@ -253,10 +253,12 @@ async function prepareImageFile(file: File, index: number): Promise<QueuedImage>
   if (typeof createImageBitmap === "function") {
     try {
       const bitmap = await createImageBitmap(file);
-      const maxSide = 1024;
-      const scale = Math.min(1, maxSide / Math.max(bitmap.width || 1, bitmap.height || 1));
-      const width = Math.max(1, Math.round(bitmap.width * scale));
-      const height = Math.max(1, Math.round(bitmap.height * scale));
+      // Jev refuses a side under 280 pixels, so a small picture is scaled up; a large one comes down to 1024
+      const shortSide = Math.min(bitmap.width || 1, bitmap.height || 1);
+      const longSide = Math.max(bitmap.width || 1, bitmap.height || 1);
+      const scale = shortSide < 280 ? 280 / shortSide : Math.min(1, 1024 / longSide);
+      const width = Math.max(280, Math.round(bitmap.width * scale));
+      const height = Math.max(280, Math.round(bitmap.height * scale));
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
