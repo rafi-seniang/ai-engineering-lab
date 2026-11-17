@@ -239,6 +239,11 @@ function normalizeImageMime(mime: string): "image/jpeg" | "image/png" {
   return mime === "image/png" ? mime : "image/jpeg";
 }
 
+// Dispatch takes names up to 120 characters, and downloaded files often have longer ones
+function imageName(file: File, index: number): string {
+  return (file.name || `image-${index + 1}.jpg`).slice(0, 120);
+}
+
 async function prepareImageFile(file: File, index: number): Promise<QueuedImage> {
   const rawBuffer = await file.arrayBuffer();
   const fallbackMime = normalizeImageMime(file.type);
@@ -264,7 +269,7 @@ async function prepareImageFile(file: File, index: number): Promise<QueuedImage>
           bitmap.close();
           return {
             id: `img-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
-            name: file.name || `image-${index + 1}.jpg`,
+            name: imageName(file, index),
             mimeType: "image/jpeg",
             dataBase64: dataUrl.slice(comma + 1),
             previewUrl: dataUrl,
@@ -279,7 +284,7 @@ async function prepareImageFile(file: File, index: number): Promise<QueuedImage>
 
   return {
     id: `img-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
-    name: file.name || `image-${index + 1}`,
+    name: imageName(file, index),
     mimeType: fallbackMime,
     dataBase64: fallbackBase64,
     previewUrl: fallbackPreview,
