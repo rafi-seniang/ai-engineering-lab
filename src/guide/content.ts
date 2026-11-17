@@ -146,7 +146,7 @@ export const GUIDE: Record<Lang, GuideText> = {
         tech: {
           title: "Why it is fast: a System 1 model",
           paragraphs: [
-            "Jev (by TypeSafe) is a decision model, not a chat model. It never writes text: it reads the input once and returns a probability for each choice it was given. Because nothing is generated token by token, an answer takes one pass, and the probabilities are calibrated, so they can be trusted as a confidence.",
+            "Jev (by TypeSafe) is a decision model, not a chat model. It never writes text: it reads the input once and returns a probability for each choice it was given. Because nothing is generated token by token, an answer takes one pass, and each probability can be read as a confidence.",
             "The name comes from System 1 and System 2 thinking: the quick judgement you make without deliberating, as opposed to slow step-by-step reasoning. Gemini Decision 1 is Google's model of the same kind and can be picked instead. Pictures are sent to Jev as image assets, so the same rule works on photos.",
             "The 400 to 500 ms is almost all the call to Jev's API and back: the service itself adds little. A batch of 10 is sent in parallel, so it takes about as long as one.",
           ],
@@ -223,23 +223,23 @@ export const GUIDE: Record<Lang, GuideText> = {
     open: (name) => `Buka ${name}`,
     sections: { what: "Fungsinya", how: "Cara mencoba", example: "Contoh", measured: "Hasil ukur" },
     flow: {
-      title: "Satu request melewati gerbang",
-      request: "Request chat masuk lewat endpoint yang kompatibel dengan OpenAI",
-      guard: "Penjaga",
+      title: "Satu request melewati gate",
+      request: "Chat request masuk lewat endpoint yang OpenAI-compatible",
+      guard: "Guard",
       guardDetail:
-        "Jev menjawab dua pertanyaan dalam satu panggilan: apakah ini injeksi, dan apakah di luar topik yang diizinkan? Gemini Decision menjawab kalau Jev gagal.",
-      allowed: "Tidak: lolos",
-      question: "Injeksi atau off-topic 0.90 ke atas?",
-      blocked: "Ya: diblok",
-      blockedDetail: "Dijawab 403 beserta alasannya. Tidak ada model bahasa yang melihatnya.",
+        "Jev menjawab dua pertanyaan dalam satu panggilan: apakah ini prompt injection, dan apakah off-topic dari scope yang diizinkan? Gemini Decision menjawab kalau Jev gagal.",
+      allowed: "Tidak: allowed",
+      question: "Injection atau off-topic 0.90 ke atas?",
+      blocked: "Ya: blocked",
+      blockedDetail: "Dijawab 403 beserta alasannya. Tidak ada LLM yang melihatnya.",
       model: "Model menjawab",
-      modelDetail: "deepseek-flash menulis balasannya. Hanya model bahasa ini yang dijangkau request.",
+      modelDetail: "deepseek-flash menulis balasannya. Hanya LLM ini yang dijangkau request.",
       after:
         "Jawabannya di-cache, dan setiap tool call dari model dicek terhadap permintaan user sebelum dikembalikan.",
     },
     costs: {
       title: "Kenapa Jev: biaya dan kecepatan",
-      lead: "Satu keputusan di sini sekitar 300 token input. Model chat juga harus menulis jawabannya (sekitar 10 token, tanpa thinking), sedangkan model keputusan cuma mengembalikan probabilitas dan tidak menagih output.",
+      lead: "Satu keputusan di sini sekitar 300 token input. Chat model juga harus menulis jawabannya (sekitar 10 token, tanpa thinking), sedangkan decision model cuma mengembalikan probabilitas dan tidak menagih output.",
       headers: [
         "Model",
         "Input, per 1 juta token",
@@ -303,7 +303,7 @@ export const GUIDE: Record<Lang, GuideText> = {
         route: "/dispatch",
         tagline:
           "Memilah teks atau gambar ke pilihan yang kamu tulis sendiri, dalam sekitar setengah detik, dengan probabilitas untuk tiap pilihan.",
-        what: "Kamu menulis aturan (instruksi dan beberapa pilihan, misalnya A, B dan C), lalu Dispatch memutuskan setiap teks atau gambar masuk ke pilihan mana. Gunanya untuk merutekan pekerjaan: pesan support ke tim yang tepat, faktur ke bagian keuangan, foto ke folder yang benar. Setiap jawaban disertai seberapa yakin modelnya, dan confidence gate mengirim jawaban yang ragu ke manusia.",
+        what: "Kamu menulis aturan (instruksi dan beberapa pilihan, misalnya A, B dan C), lalu Dispatch memutuskan setiap teks atau gambar masuk ke pilihan mana. Gunanya untuk merutekan pekerjaan: pesan support ke tim yang tepat, faktur ke bagian keuangan, foto ke folder yang benar. Setiap jawaban disertai confidence modelnya, dan confidence gate mengirim jawaban yang ragu ke manusia.",
         steps: [
           "Pilih preset di sidebar, atau tulis instruksi dan pilihanmu sendiri.",
           "Pilih Text atau Images di bagian Input. Biarkan modelnya Jev.",
@@ -323,10 +323,10 @@ export const GUIDE: Record<Lang, GuideText> = {
           outcome: "A, dengan 1.00, lolos gate 0.70, jadi langsung masuk antrean tim engineering.",
         },
         tech: {
-          title: "Kenapa cepat: model System 1",
+          title: "Kenapa cepat: System 1 model",
           paragraphs: [
-            "Jev (buatan TypeSafe) adalah model keputusan, bukan model chat. Ia tidak pernah menulis teks: ia membaca input sekali lalu memberi probabilitas untuk setiap pilihan yang diberikan. Karena tidak ada yang dihasilkan token demi token, satu jawaban cukup satu kali jalan, dan probabilitasnya terkalibrasi, jadi bisa dipakai sebagai tingkat keyakinan.",
-            "Namanya dari konsep berpikir System 1 dan System 2: penilaian cepat tanpa menimbang panjang, lawan dari penalaran pelan langkah demi langkah. Gemini Decision 1 adalah model sejenis dari Google dan bisa dipilih sebagai gantinya. Gambar dikirim ke Jev sebagai image asset, jadi aturan yang sama berlaku untuk foto.",
+            "Jev (buatan TypeSafe) adalah decision model, bukan chat model. Ia tidak pernah menulis teks: ia membaca input sekali lalu memberi probabilitas untuk setiap pilihan yang diberikan. Karena tidak ada yang dihasilkan token by token, satu jawaban cukup satu forward pass, dan probabilitasnya bisa dibaca sebagai confidence.",
+            "Namanya dari konsep berpikir System 1 dan System 2: penilaian cepat tanpa menimbang panjang, lawan dari reasoning pelan step by step. Gemini Decision 1 adalah model sejenis dari Google dan bisa dipilih sebagai gantinya. Gambar dikirim ke Jev sebagai image asset, jadi aturan yang sama berlaku untuk foto.",
             "Hampir seluruh 400 sampai 500 ms itu adalah panggilan ke API Jev dan kembali: layanan kita sendiri cuma menambah sedikit. Batch berisi 10 dikirim paralel, jadi waktunya hampir sama dengan satu.",
           ],
         },
@@ -353,10 +353,10 @@ export const GUIDE: Record<Lang, GuideText> = {
             "Sepuluh hasil teratas semuanya foto Burj Khalifa. Nama filenya berbahasa Inggris dan Lens memang tidak pernah membacanya: kecocokannya datang dari gambarnya.",
         },
         tech: {
-          title: "Kenapa kata bisa menemukan gambar: satu ruang vektor bersama",
+          title: "Kenapa kata bisa menemukan gambar: satu shared embedding space",
           paragraphs: [
-            "Gemini Embedding 2 mengubah teks atau gambar menjadi deretan 768 angka, yaitu vektor. Model ini dilatih supaya gambar dan kalimat yang menggambarkannya mendapat vektor yang hampir sama: foto peselancar dan kata “selancar di ombak” jatuh berdekatan, dalam bahasa apa pun.",
-            "Setiap foto diubah jadi vektor sekali saat ditambahkan, lalu disimpan di Typesense, mesin pencari dengan indeks vektor. Saat mencari, kata atau gambarmu diubah jadi vektor dengan cara yang sama, lalu Typesense mencari yang terdekat dengan cosine similarity. Di bawah 0.35 tidak ada yang cukup dekat, dan Lens bilang begitu daripada menampilkan yang paling tidak buruk.",
+            "Gemini Embedding 2 mengubah teks atau gambar menjadi deretan 768 angka, yaitu vector embedding. Model ini dilatih supaya gambar dan kalimat yang menggambarkannya mendapat vector yang hampir sama: foto peselancar dan kata “selancar di ombak” jatuh berdekatan, dalam bahasa apa pun.",
+            "Setiap foto diubah jadi vector sekali saat ditambahkan, lalu disimpan di Typesense, search engine dengan vector index. Saat mencari, kata atau gambarmu diubah jadi vector dengan cara yang sama, lalu Typesense mencari yang terdekat dengan cosine similarity. Di bawah 0.35 tidak ada yang cukup dekat, dan Lens bilang begitu daripada menampilkan yang paling tidak buruk.",
           ],
         },
         measured:
@@ -367,12 +367,12 @@ export const GUIDE: Record<Lang, GuideText> = {
         name: "Gatekeeper",
         route: "/gatekeeper",
         tagline:
-          "Berdiri di depan model chat dan menghentikan prompt injection dan request di luar topik sebelum modelnya melihat.",
-        what: "Aplikasi yang memakai model bahasa bisa dibujuk untuk mengabaikan instruksinya (prompt injection), atau dipakai untuk hal yang bukan tugasnya. Gatekeeper duduk di antara aplikasi dan model, memakai API yang sama dengan OpenAI, dan mengecek setiap request lebih dulu. Request yang aman diteruskan ke model, dan hanya itu.",
+          "Berdiri di depan chat model dan menghentikan prompt injection dan request di luar topik sebelum modelnya melihat.",
+        what: "Aplikasi yang memakai LLM bisa dibujuk untuk mengabaikan instruksinya (prompt injection), atau dipakai untuk hal yang bukan tugasnya. Gatekeeper duduk di antara aplikasi dan model, memakai API yang sama dengan OpenAI, dan mengecek setiap request lebih dulu. Request yang aman diteruskan ke model, dan hanya itu.",
         steps: [
           "Tulis topik yang boleh ditangani asisten di Allowed scope, misalnya “cinema booking”.",
           "Tulis request yang mungkin dikirim user, atau pilih salah satu contoh.",
-          "Tekan Check only untuk melihat keputusan gerbang tanpa memanggil model, atau Send through the gate untuk sekalian dapat jawaban.",
+          "Tekan Check only untuk melihat keputusan gate tanpa memanggil model, atau Send through the gate untuk sekalian dapat jawaban.",
           "Baca skornya: request diblok kalau injection atau off-topic mencapai 0.90. Request terbaru tercatat di bawah.",
         ],
         example: {
@@ -383,17 +383,17 @@ export const GUIDE: Record<Lang, GuideText> = {
             { label: "Off-topic", probability: 0.97 },
           ],
           outcome:
-            "Diblok sebagai off-topic: asisten bioskop tidak seharusnya menulis kode, dan tidak ada model yang dipanggil.",
+            "Blocked sebagai off-topic: asisten bioskop tidak seharusnya menulis kode, dan tidak ada model yang dipanggil.",
         },
         tech: {
           title: "Bagaimana keputusannya dibuat",
           paragraphs: [
-            "Penjaganya adalah Jev, model keputusan yang sama dengan di Dispatch, yang ditanya dua pertanyaan ya atau tidak tentang request dalam satu panggilan. Ia membaca bahasa Inggris dan Indonesia sama baiknya, dan Gemini Decision mengambil alih kalau Jev tidak menjawab.",
-            "Skor off-topic 0.81 tetap lolos, karena gerbang baru memblok di 0.90 ke atas: blok yang salah membuat user sungguhan kehilangan jawabannya, jadi gerbang harus yakin dulu. Hanya request yang lolos dari penjaga yang sampai ke model, jadi request yang diblok cuma memakan satu panggilan Jev. Jev juga bisa menilai seberapa berat sebuah request untuk memilih model kecil atau besar, dalam panggilan yang sama. Demo ini memakai satu model murah, jadi itu tidak dipakai.",
+            "Penjaganya adalah Jev, decision model yang sama dengan di Dispatch, yang ditanya dua pertanyaan yes or no tentang request dalam satu panggilan. Ia membaca bahasa Inggris dan Indonesia sama baiknya, dan Gemini Decision mengambil alih kalau Jev tidak menjawab.",
+            "Skor off-topic 0.81 tetap lolos, karena gate baru memblok di 0.90 ke atas: false positive membuat user sungguhan kehilangan jawabannya, jadi gate harus yakin dulu. Hanya request yang lolos dari guard yang sampai ke model, jadi request yang diblok cuma memakan satu panggilan Jev. Jev juga bisa menilai seberapa berat sebuah request untuk memilih model kecil atau besar, dalam panggilan yang sama. Demo ini memakai satu model murah, jadi itu tidak dipakai.",
           ],
         },
         measured:
-          "Pada jalur produksi: 0 dari 14 request biasa diblok, 5 dari 6 injeksi dan 6 dari 6 request off-topic tertangkap.",
+          "Di production path: 0 dari 14 request biasa diblok, 5 dari 6 prompt injection dan 6 dari 6 request off-topic tertangkap.",
       },
     ],
   },
