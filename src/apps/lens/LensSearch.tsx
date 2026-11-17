@@ -5,7 +5,6 @@ import { imageUrl, lens, type OriginFilter, type Photograph, type SearchResult, 
 import { AppShell } from "../shared/AppShell";
 import "./lens.css";
 
-const DEFAULT_QUERY = "surfing";
 const EXAMPLES = ["selancar di ombak", "yellow sports car", "planet Mars", "menara tertinggi di dunia"];
 const ORIGINS: { value: OriginFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -174,8 +173,9 @@ export function LensSearch() {
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const uploadsView = params.get("view") === "uploads";
-  const allView = params.get("view") === "all";
-  const query = params.get("q") ?? DEFAULT_QUERY;
+  const query = params.get("q") ?? "";
+  // With nothing typed, Lens shows the whole database so a visitor sees what is there before searching
+  const allView = params.get("view") === "all" || (!uploadsView && !query);
   const origin = (ORIGINS.find((option) => option.value === params.get("origin"))?.value ?? "all") as OriginFilter;
   const selectedId = params.get("photo");
 
@@ -279,8 +279,8 @@ export function LensSearch() {
   function searchFor(text: string, event?: FormEvent) {
     event?.preventDefault();
     const trimmed = text.trim();
-    if (!trimmed) return;
     setUpload(null);
+    if (!trimmed) return update({ q: null, view: null, photo: null });
     update({ q: trimmed, view: null, photo: null });
   }
 
@@ -402,10 +402,15 @@ export function LensSearch() {
         detail: scopeDetail,
       }}
       nav={[
-        { label: "Search", to: "/lens", icon: SEARCH_ICON, current: !uploadsView && !allView },
+        {
+          label: "Search",
+          to: query ? `/lens?q=${encodeURIComponent(query)}` : "/lens",
+          icon: SEARCH_ICON,
+          current: !uploadsView && !allView,
+        },
         {
           label: "All pictures",
-          to: "/lens?view=all",
+          to: "/lens",
           icon: GRID_ICON,
           count: collection.data?.photographs,
           current: allView,
