@@ -124,24 +124,24 @@ export const GUIDE: Record<Lang, GuideText> = {
         route: "/dispatch",
         tagline:
           "Sorts texts or pictures into choices you write, in about half a second, with a probability for each choice.",
-        what: "You write a rule (an instruction and a few choices, such as A, B and C) and Dispatch decides which choice each text or picture belongs to. It is for routing work: a support message to the right desk, an invoice to finance, a photo to the right folder. Every answer comes with how sure the model is, and a confidence gate sends unsure answers to a person instead.",
+        what: "You write a rule (an instruction and a few choices, such as Billing, Technical and Incident) and Dispatch decides which choice each text or picture belongs to. It is for routing work: a support message to the right desk, an invoice to finance, a photo to the right folder. Every answer comes with how sure the model is, and a confidence gate sends unsure answers to a person instead.",
         steps: [
-          "Pick a preset in the sidebar, or write your own instruction and choices.",
+          "Pick a preset next to Categories, or write your own categories.",
           "Choose Text or Images under Input. Keep the model on Jev.",
-          "Load the samples, or type or upload 1 to 10 of your own.",
-          "Press Sort. Each item gets its choice and probability. Click one to see the probability of every choice.",
-          "Move the confidence gate: an answer below it is marked for a person to check.",
+          "Use the examples, or type or upload 1 to 10 of your own.",
+          "Press Sort. Each item gets its category and probability. Click one to see the probability of every category.",
+          "Open Prompt and confidence gate to change the instruction or the gate: an answer below the gate is marked for a person to check.",
         ],
         example: {
-          title: "The preset Topic A / B / C",
+          title: "The preset Main topic",
           input:
             "Moving from 16-bit weights to 4-bit GGUF cut VRAM use on the 8 GB laptop GPU by half while keeping structured JSON tool calls accurate.",
           rows: [
-            { label: "A. Software, AI models, GPUs", probability: 1.0 },
-            { label: "B. Finance, invoices, taxes", probability: 0.0 },
-            { label: "C. Clinical care, patients", probability: 0.0 },
+            { label: "Tech. Software, AI models, GPUs", probability: 1.0 },
+            { label: "Finance. Invoices, taxes", probability: 0.0 },
+            { label: "Health. Clinical care, patients", probability: 0.0 },
           ],
-          outcome: "A, at 1.00, passes the 0.70 gate, so it goes straight to the engineering queue.",
+          outcome: "Tech, at 1.00, passes the 0.70 gate, so it goes straight to the engineering queue.",
         },
         tech: {
           title: "Why it is fast: a System 1 model",
@@ -164,7 +164,7 @@ export const GUIDE: Record<Lang, GuideText> = {
           "Type what you are looking for in the search bar, in English or Indonesian. Try “selancar di ombak” or “menara tertinggi di dunia”.",
           "Or press Search by picture and choose a photo: Lens finds the ones that look like it.",
           "Click a result to see the photographs that look most like it.",
-          "Press Add to database to upload your own pictures, then search for what they show. Only you can remove them.",
+          "Press Add pictures to upload your own, then search for what they show. They are listed under Visitor uploads.",
         ],
         example: {
           title: "A search no caption could answer",
@@ -190,9 +190,9 @@ export const GUIDE: Record<Lang, GuideText> = {
           "Stands in front of a chat model and stops prompt injection and off-topic requests before the model sees them.",
         what: "An app that talks to a language model can be talked into ignoring its instructions (prompt injection), or used for things it was never meant for. Gatekeeper sits between the app and the model, speaks the same API as OpenAI, and checks every request first. A safe request goes on to the model, and nothing else does.",
         steps: [
-          "Write the topics the assistant may handle in Allowed scope, such as “cinema booking”.",
-          "Write a request a user might send, or pick one of the samples.",
-          "Press Check only to see the gate's decision without calling a model, or Send through the gate to get an answer too.",
+          "Write a request a user might send, or pick an example. Each example is tagged with what the gate should do.",
+          "Press Check to see the gate's decision without calling a model, or Check and answer to get an answer too.",
+          "Open Allowed topics to change what the assistant may handle, such as “cinema booking”.",
           "Read the scores: a request is blocked when injection or off-topic reaches 0.90. Recent requests are listed below.",
         ],
         example: {
@@ -303,24 +303,24 @@ export const GUIDE: Record<Lang, GuideText> = {
         route: "/dispatch",
         tagline:
           "Memilah teks atau gambar ke pilihan yang kamu tulis sendiri, dalam sekitar setengah detik, dengan probabilitas untuk tiap pilihan.",
-        what: "Kamu menulis aturan (instruksi dan beberapa pilihan, misalnya A, B dan C), lalu Dispatch memutuskan setiap teks atau gambar masuk ke pilihan mana. Gunanya untuk merutekan pekerjaan: pesan support ke tim yang tepat, faktur ke bagian keuangan, foto ke folder yang benar. Setiap jawaban disertai confidence modelnya, dan confidence gate mengirim jawaban yang ragu ke manusia.",
+        what: "Kamu menulis aturan (instruksi dan beberapa pilihan, misalnya Billing, Technical dan Incident), lalu Dispatch memutuskan setiap teks atau gambar masuk ke pilihan mana. Gunanya untuk merutekan pekerjaan: pesan support ke tim yang tepat, faktur ke bagian keuangan, foto ke folder yang benar. Setiap jawaban disertai confidence modelnya, dan confidence gate mengirim jawaban yang ragu ke manusia.",
         steps: [
-          "Pilih preset di sidebar, atau tulis instruksi dan pilihanmu sendiri.",
+          "Pilih preset di samping Categories, atau tulis kategorimu sendiri.",
           "Pilih Text atau Images di bagian Input. Biarkan modelnya Jev.",
-          "Muat contoh, atau ketik atau upload 1 sampai 10 milikmu sendiri.",
-          "Tekan Sort. Setiap item dapat pilihan dan probabilitasnya. Klik salah satu untuk melihat probabilitas semua pilihan.",
-          "Geser confidence gate: jawaban di bawahnya ditandai untuk dicek manusia.",
+          "Pakai contohnya, atau ketik atau upload 1 sampai 10 milikmu sendiri.",
+          "Tekan Sort. Setiap item dapat kategori dan probabilitasnya. Klik salah satu untuk melihat probabilitas semua kategori.",
+          "Buka Prompt and confidence gate untuk mengubah instruksi atau gate: jawaban di bawah gate ditandai untuk dicek manusia.",
         ],
         example: {
-          title: "Preset Topic A / B / C",
+          title: "Preset Main topic",
           input:
             "Moving from 16-bit weights to 4-bit GGUF cut VRAM use on the 8 GB laptop GPU by half while keeping structured JSON tool calls accurate.",
           rows: [
-            { label: "A. Software, model AI, GPU", probability: 1.0 },
-            { label: "B. Keuangan, faktur, pajak", probability: 0.0 },
-            { label: "C. Klinis, pasien", probability: 0.0 },
+            { label: "Tech. Software, model AI, GPU", probability: 1.0 },
+            { label: "Finance. Faktur, pajak", probability: 0.0 },
+            { label: "Health. Klinis, pasien", probability: 0.0 },
           ],
-          outcome: "A, dengan 1.00, lolos gate 0.70, jadi langsung masuk antrean tim engineering.",
+          outcome: "Tech, dengan 1.00, lolos gate 0.70, jadi langsung masuk antrean tim engineering.",
         },
         tech: {
           title: "Kenapa cepat: System 1 model",
@@ -344,7 +344,7 @@ export const GUIDE: Record<Lang, GuideText> = {
           "Ketik yang kamu cari di kolom pencarian, dalam bahasa Inggris atau Indonesia. Coba “selancar di ombak” atau “menara tertinggi di dunia”.",
           "Atau tekan Search by picture dan pilih foto: Lens mencari yang mirip.",
           "Klik salah satu hasil untuk melihat foto-foto yang paling mirip dengannya.",
-          "Tekan Add to database untuk upload gambarmu sendiri, lalu cari isinya. Hanya kamu yang bisa menghapusnya.",
+          "Tekan Add pictures untuk upload gambarmu sendiri, lalu cari isinya. Gambarnya muncul di Visitor uploads.",
         ],
         example: {
           title: "Pencarian yang tidak bisa dijawab caption",
@@ -370,9 +370,9 @@ export const GUIDE: Record<Lang, GuideText> = {
           "Berdiri di depan chat model dan menghentikan prompt injection dan request di luar topik sebelum modelnya melihat.",
         what: "Aplikasi yang memakai LLM bisa dibujuk untuk mengabaikan instruksinya (prompt injection), atau dipakai untuk hal yang bukan tugasnya. Gatekeeper duduk di antara aplikasi dan model, memakai API yang sama dengan OpenAI, dan mengecek setiap request lebih dulu. Request yang aman diteruskan ke model, dan hanya itu.",
         steps: [
-          "Tulis topik yang boleh ditangani asisten di Allowed scope, misalnya “cinema booking”.",
-          "Tulis request yang mungkin dikirim user, atau pilih salah satu contoh.",
-          "Tekan Check only untuk melihat keputusan gate tanpa memanggil model, atau Send through the gate untuk sekalian dapat jawaban.",
+          "Tulis request yang mungkin dikirim user, atau pilih salah satu contoh. Setiap contoh diberi tag apa yang seharusnya dilakukan gate.",
+          "Tekan Check untuk melihat keputusan gate tanpa memanggil model, atau Check and answer untuk sekalian dapat jawaban.",
+          "Buka Allowed topics untuk mengubah topik yang boleh ditangani asisten, misalnya “cinema booking”.",
           "Baca skornya: request diblok kalau injection atau off-topic mencapai 0.90. Request terbaru tercatat di bawah.",
         ],
         example: {
