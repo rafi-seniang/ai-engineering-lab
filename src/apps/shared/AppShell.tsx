@@ -13,7 +13,8 @@ export interface NavItem {
 interface AppShellProps {
   product: string;
   mark: ReactNode;
-  scope: { line: string; detail: string };
+  /** A line under the brand. Left out on screens whose page title already says what the app does */
+  scope?: { line: string; detail: string };
   nav: NavItem[];
   /** Controls under the navigation, such as a screen's modes */
   sidebar?: ReactNode;
@@ -66,10 +67,14 @@ export function AppShell({
               Close
             </button>
           </div>
-          <span className="scope">
-            <strong>{scope.line}</strong>
-            <span>{scope.detail}</span>
-          </span>
+          {scope ? (
+            <span className="scope">
+              <strong>{scope.line}</strong>
+              <span>{scope.detail}</span>
+            </span>
+          ) : (
+            <span className="scope-gap" />
+          )}
           {nav.map((item) => (
             <Link
               key={item.to}

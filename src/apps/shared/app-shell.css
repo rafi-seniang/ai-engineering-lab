@@ -699,6 +699,10 @@ li > .empty {
   padding: 8px;
   border-radius: 8px;
 }
+.scope-gap {
+  display: block;
+  height: 12px;
+}
 .scope:hover {
   background: var(--raised);
 }
