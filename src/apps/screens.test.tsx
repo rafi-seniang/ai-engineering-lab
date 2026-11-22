@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -383,6 +383,10 @@ test("Lens shows pictures only, searches by meaning and indexes uploads without 
   expect(screen.queryByText(/gemini-embedding-2/)).not.toBeInTheDocument();
   expect(screen.getByText(/Picture searches and uploads use Google AI Studio's free tier/)).toBeInTheDocument();
   expect(searchUrls[0]).not.toContain("mode=");
+  // A picture that fails to load asks once more instead of staying broken
+  const picture = result.querySelector("img") as HTMLImageElement;
+  fireEvent.error(picture);
+  await vi.waitFor(() => expect(picture.src).toContain("retry=1"), { timeout: 3000 });
   await userEvent.click(result);
   const opened = await screen.findByRole("complementary", { name: "Selected picture" });
   expect(within(opened).queryByText("Samuel Root")).not.toBeInTheDocument();
