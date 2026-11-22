@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type CSSProperties, type DragEvent, type FormEvent, useEffect, useState } from "react";
+import { type CSSProperties, type DragEvent, type FormEvent, type SyntheticEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { imageUrl, lens, type OriginFilter, type Photograph, type SearchResult, unwrap } from "../../api/lens";
 import { AppShell } from "../shared/AppShell";
@@ -58,6 +58,19 @@ function archiveFirst(result: SearchResult): SearchResult {
   return { ...result, hits: [...archive, ...uploads] };
 }
 
+const RETRY_AFTER_MS = 1500;
+
+/** A picture that failed on a shaky connection asks once more, so a dropped request does not leave a broken icon. */
+function retryOnce(event: SyntheticEvent<HTMLImageElement>) {
+  const img = event.currentTarget;
+  if (img.dataset.retried) return;
+  img.dataset.retried = "1";
+  const again = `${img.src}${img.src.includes("?") ? "&" : "?"}retry=1`;
+  window.setTimeout(() => {
+    img.src = again;
+  }, RETRY_AFTER_MS);
+}
+
 /** Pictures only: no title, date or tag is shown, because the search never reads them either. */
 function Gallery({
   result,
@@ -87,7 +100,13 @@ function Gallery({
               title={label}
               onClick={() => onSelect(photograph)}
             >
-              <img src={imageUrl(photograph)} alt="" loading="lazy" style={{ "--ratio": ratio } as CSSProperties} />
+              <img
+                src={imageUrl(photograph)}
+                alt=""
+                loading="lazy"
+                onError={retryOnce}
+                style={{ "--ratio": ratio } as CSSProperties}
+              />
             </button>
           </li>
         );
@@ -127,7 +146,7 @@ function Detail({
           Close
         </button>
       </header>
-      <img src={imageUrl(photograph)} alt="" className="lens-detail-image" />
+      <img src={imageUrl(photograph)} alt="" className="lens-detail-image" onError={retryOnce} />
       {isUpload ? (
         <div className="lens-detail-actions">
           <span className="pill">Visitor upload</span>
@@ -158,7 +177,7 @@ function Detail({
                 aria-label={`Similar picture, similarity ${score.toFixed(2)}`}
                 title={`Similarity ${score.toFixed(2)}`}
               >
-                <img src={imageUrl(neighbour)} alt="" loading="lazy" />
+                <img src={imageUrl(neighbour)} alt="" loading="lazy" onError={retryOnce} />
               </button>
             </li>
           ))}
