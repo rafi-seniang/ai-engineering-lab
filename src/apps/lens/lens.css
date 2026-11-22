@@ -7,8 +7,8 @@
   min-width: 0;
 }
 .lens-query-picture {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   flex: none;
   object-fit: cover;
   border-radius: var(--radius-control);
@@ -19,9 +19,74 @@
   margin: 0;
   border: 0;
 }
-.title-actions .btn.is-selected {
+/* the search is the page's one big control: a heading, the box, and a row of examples */
+.lens-hero {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.lens-hero h1 {
+  font-size: var(--fs-title);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.lens-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lens-search {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  flex: 1 1 420px;
+  max-width: 680px;
+  min-width: 0;
+}
+.lens-search svg {
+  position: absolute;
+  left: 13px;
+  top: 13px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+.lens-search input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px 0 38px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+.lens-search input::placeholder {
+  color: var(--faint);
+}
+.lens-search .btn,
+.lens-search-row > .btn {
+  height: 42px;
+}
+.lens-search-row .btn.is-selected {
   background: var(--active);
   border-color: var(--text);
+}
+.lens-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.lens-results-head h2 {
+  font-size: var(--fs-section);
+  font-weight: 600;
 }
 .lens-upload {
   position: relative;
@@ -117,11 +182,6 @@
   font-size: var(--fs-small);
 }
 
-/* source filter and example queries strip */
-.lens-toolbar {
-  margin-bottom: 16px;
-  gap: 12px;
-}
 .lens-examples {
   display: flex;
   flex-wrap: wrap;
@@ -269,12 +329,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
   /* one region at a time on narrower screens: choosing a photograph swaps the gallery for its detail */
-  .show-detail .title-row {
-    margin-bottom: 12px;
-  }
-  .show-detail .title-row .sub,
-  .show-detail .title-actions,
-  .show-detail .lens-toolbar,
+  .show-detail .lens-hero,
+  .show-detail .lens-results-head,
   .show-detail .lens-ingest,
   .show-detail .lens-results {
     display: none;
@@ -284,52 +340,29 @@
   }
 }
 @media (max-width: 640px) {
-  .title-actions {
-    width: 100%;
-    flex-wrap: wrap;
+  .lens-search {
+    flex-basis: 100%;
+  }
+  .lens-search-row > .btn {
+    flex: 1 1 0;
   }
 }
 
-.lens-privacy {
-  margin-top: 24px;
-}
-
-.lens-subject + .lens-subject {
-  margin-top: 28px;
-}
-
-.lens-subject header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.lens-subject h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.lens-subject h2 .meta {
-  font-weight: 400;
-  margin-left: 6px;
+.app-shell .lens-privacy {
+  margin-top: 40px;
 }
 
 /* on a phone the full listing is a grid of small squares, so 240 pictures stay a short scroll */
 @media (max-width: 640px) {
-  .lens-subject .lens-gallery {
+  .lens-all .lens-gallery {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 6px;
   }
-  .lens-subject .lens-gallery::after {
+  .lens-all .lens-gallery::after {
     content: none;
   }
-  .lens-subject .lens-card img {
+  .lens-all .lens-card img {
     aspect-ratio: 1;
-  }
-  .lens-subject header {
-    flex-wrap: wrap;
   }
 }
