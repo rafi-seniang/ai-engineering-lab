@@ -114,7 +114,9 @@ test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches a
   renderAt("/dispatch", <PilahInbox />);
 
   expect(screen.getByRole("link", { name: "Back to lobby" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "System 1 Model" })).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { level: 1, name: "Sort messages and pictures into your own categories" }),
+  ).toBeInTheDocument();
   expect(screen.getByLabelText("Rule preset")).toBeInTheDocument();
   expect(screen.getByRole("textbox", { name: "Text 1" })).toBeInTheDocument();
   expect(screen.getByText("Below 0.70 means low confidence and needs a human judge.")).toBeInTheDocument();
@@ -127,7 +129,9 @@ test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches a
   expect(await within(predictionPanel).findByText("jev-1.14.0")).toBeInTheDocument();
   expect(sortCalls[0]?.engine).toBe("jev");
 
-  await userEvent.click(screen.getByRole("button", { name: "Add choice" }));
+  // The topic preset: three categories, so the one added next is D
+  await userEvent.selectOptions(screen.getByLabelText("Rule preset"), "abc");
+  await userEvent.click(screen.getByRole("button", { name: "+ Add category" }));
   const fourthLabel = screen.getByRole("textbox", { name: "Choice 4 label" });
   expect(fourthLabel).toHaveValue("D");
   await userEvent.type(screen.getByRole("textbox", { name: "Choice 4 description" }), "Hardware lab maintenance");
@@ -148,7 +152,7 @@ test("Dispatch defaults to Jev, shows a Google notice for Gemini, and switches a
     expect(sortCalls.length).toBeGreaterThanOrEqual(2);
   });
   const latest = sortCalls[sortCalls.length - 1];
-  expect(latest?.choices.map((choice) => choice.label)).toEqual(["A", "B", "C", "D"]);
+  expect(latest?.choices.map((choice) => choice.label)).toEqual(["Tech", "Finance", "Health", "D"]);
   expect(latest?.items).toEqual(["Cleaned dust filters on the open GPU rig."]);
   const matches = await within(predictionPanel).findAllByText(/Hardware lab maintenance/);
   expect(matches.length).toBeGreaterThanOrEqual(1);
@@ -259,15 +263,11 @@ test("Dispatch sorts a batch of uploaded images with Jev, chosen in the sidebar"
 
   // Each input keeps its own rule: Text brings back the text preset, Images the image preset
   const prompt = screen.getByLabelText("Prompt");
-  expect(prompt).toHaveValue(
-    "Inspect this image and decide which choice (A, B, or C) best matches its primary subject.",
-  );
+  expect(prompt).toHaveValue("Inspect this image and decide which choice best matches its primary subject.");
   await userEvent.click(screen.getByRole("button", { name: /^Text/ }));
-  expect(prompt).toHaveValue("Read the paragraph and pick which choice (A, B, or C) matches its main topic.");
+  expect(prompt).toHaveValue("Route the customer message to the desk that owns the next action.");
   await userEvent.click(screen.getByRole("button", { name: /^Images/ }));
-  expect(prompt).toHaveValue(
-    "Inspect this image and decide which choice (A, B, or C) best matches its primary subject.",
-  );
+  expect(prompt).toHaveValue("Inspect this image and decide which choice best matches its primary subject.");
 });
 
 test("Lens shows pictures only, searches by meaning and indexes uploads without labels", async () => {
@@ -379,7 +379,8 @@ test("Lens shows pictures only, searches by meaning and indexes uploads without 
   expect(screen.queryByText("[Dog with Duck in Mouth]")).not.toBeInTheDocument();
   expect(screen.queryByText("1860s")).not.toBeInTheDocument();
   expect(screen.queryByText("Subjects")).not.toBeInTheDocument();
-  expect(screen.getByText(/gemini-embedding-2 · 271 archive/)).toBeInTheDocument();
+  // No engine names or vector store on the page: those live in the guide
+  expect(screen.queryByText(/gemini-embedding-2/)).not.toBeInTheDocument();
   expect(screen.getByText(/Picture searches and uploads use Google AI Studio's free tier/)).toBeInTheDocument();
   expect(searchUrls[0]).not.toContain("mode=");
   await userEvent.click(result);
@@ -392,18 +393,18 @@ test("Lens shows pictures only, searches by meaning and indexes uploads without 
   await userEvent.type(searchInput, "spaceship{Enter}");
   expect(await screen.findByText(/Nothing in the collection is close enough to “spaceship”/)).toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "Add to database" }));
-  expect(screen.getByText(/no title or tag, since search finds them by what they show/)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Add pictures" }));
+  expect(screen.getByText(/Only the picture is stored, with no title or tag/)).toBeInTheDocument();
   const fileInput = screen.getByLabelText("Choose images to index");
   const testFile = new File([new Uint8Array([137, 80, 78, 71])], "desk.png", { type: "image/png" });
   await userEvent.upload(fileInput, testFile);
   expect(screen.queryByLabelText("Title (optional)")).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Save to Typesense" }));
+  await userEvent.click(screen.getByRole("button", { name: "Add to the database" }));
 
-  expect(await screen.findByText(/Indexed 1 picture into Typesense/)).toBeInTheDocument();
+  expect(await screen.findByText(/Added 1 picture/)).toBeInTheDocument();
   const detail = await screen.findByRole("complementary", { name: "Selected picture" });
   expect(within(detail).queryByText("Desk Prototype")).not.toBeInTheDocument();
-  expect(within(detail).getByText("Your upload, stored in Typesense")).toBeInTheDocument();
+  expect(within(detail).getByText("Visitor upload")).toBeInTheDocument();
   expect(within(detail).getByRole("button", { name: "Remove from database" })).toBeInTheDocument();
 });
 

@@ -93,31 +93,6 @@ const DEFAULT_ENGINES: EngineOption[] = [
 
 const PRESETS: RulePreset[] = [
   {
-    id: "abc",
-    name: "Topic A / B / C",
-    instructions: "Read the paragraph and pick which choice (A, B, or C) matches its main topic.",
-    gate: 0.7,
-    choices: [
-      { label: "A", description: "Software engineering, AI models, GPUs, or cloud infrastructure" },
-      { label: "B", description: "Finance, supplier invoices, taxes, pricing, or bank transfers" },
-      { label: "C", description: "Clinical care, hospital operations, lab results, or patient symptoms" },
-    ],
-    samples: [
-      {
-        label: "GPU weights (EN)",
-        text: "Moving from 16-bit weights to 4-bit GGUF cut VRAM use on the 8 GB laptop GPU by half while keeping structured JSON tool calls accurate.",
-      },
-      {
-        label: "Faktur pajak (ID)",
-        text: "Tagihan bulan Oktober dari vendor kemasan selisih Rp 375.000 antara jumlah barang dikali harga satuan dengan angka total yang tercetak di faktur.",
-      },
-      {
-        label: "Gejala pasien (ID)",
-        text: "Pasien mengeluh sesak napas sejak pukul empat pagi disertai nyeri dada sebelah kiri dan meminta jadwal pemeriksaan dokter hari ini.",
-      },
-    ],
-  },
-  {
     id: "support",
     name: "Support queue",
     instructions: "Route the customer message to the desk that owns the next action.",
@@ -140,6 +115,31 @@ const PRESETS: RulePreset[] = [
       {
         label: "Add seats",
         text: "Please add four viewer seats to our Jakarta workspace before Monday morning and keep the current billing contact.",
+      },
+    ],
+  },
+  {
+    id: "abc",
+    name: "Main topic",
+    instructions: "Read the paragraph and pick the choice that matches its main topic.",
+    gate: 0.7,
+    choices: [
+      { label: "Tech", description: "Software engineering, AI models, GPUs, or cloud infrastructure" },
+      { label: "Finance", description: "Finance, supplier invoices, taxes, pricing, or bank transfers" },
+      { label: "Health", description: "Clinical care, hospital operations, lab results, or patient symptoms" },
+    ],
+    samples: [
+      {
+        label: "GPU weights (EN)",
+        text: "Moving from 16-bit weights to 4-bit GGUF cut VRAM use on the 8 GB laptop GPU by half while keeping structured JSON tool calls accurate.",
+      },
+      {
+        label: "Faktur pajak (ID)",
+        text: "Tagihan bulan Oktober dari vendor kemasan selisih Rp 375.000 antara jumlah barang dikali harga satuan dengan angka total yang tercetak di faktur.",
+      },
+      {
+        label: "Gejala pasien (ID)",
+        text: "Pasien mengeluh sesak napas sejak pukul empat pagi disertai nyeri dada sebelah kiri dan meminta jadwal pemeriksaan dokter hari ini.",
       },
     ],
   },
@@ -201,24 +201,24 @@ const DEFAULT_PRESET = PRESETS[0] as RulePreset;
 const IMAGE_PRESETS: ImageRulePreset[] = [
   {
     id: "image-scenes",
-    name: "Image scene A / B / C",
-    instructions: "Inspect this image and decide which choice (A, B, or C) best matches its primary subject.",
+    name: "Scene",
+    instructions: "Inspect this image and decide which choice best matches its primary subject.",
     gate: 0.7,
     choices: [
-      { label: "A", description: "Architecture, skyscrapers, bridges, or urban skylines" },
-      { label: "B", description: "Ocean beaches, surfing, wildlife, mountains, or outdoor nature" },
-      { label: "C", description: "Space, planets, rockets, robotics, or science laboratories" },
+      { label: "City", description: "Architecture, skyscrapers, bridges, or urban skylines" },
+      { label: "Nature", description: "Ocean beaches, surfing, wildlife, mountains, or outdoor nature" },
+      { label: "Space", description: "Space, planets, rockets, robotics, or science laboratories" },
     ],
   },
   {
     id: "image-quality",
-    name: "Visual safety & quality",
+    name: "Photo quality",
     instructions: "Classify whether this uploaded photo is sharp and publishable, blurry/occluded, or off-policy.",
     gate: 0.75,
     choices: [
-      { label: "A", description: "Clear, well-lit photo suitable for catalogue publishing" },
-      { label: "B", description: "Too dark, blurry, cropped, or unreadable subject" },
-      { label: "C", description: "Text screenshot, blank slide, or unrelated non-photo graphic" },
+      { label: "Publishable", description: "Clear, well-lit photo suitable for catalogue publishing" },
+      { label: "Poor quality", description: "Too dark, blurry, cropped, or unreadable subject" },
+      { label: "Not a photo", description: "Text screenshot, blank slide, or unrelated non-photo graphic" },
     ],
   },
 ];
@@ -379,12 +379,6 @@ async function createSampleImages(): Promise<QueuedImage[]> {
   );
 }
 
-const MODEL_ICON = (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true">
-    <path d="M2.5 4h11M2.5 8h7.5M2.5 12h4.5" />
-  </svg>
-);
-
 const clockNow = () => new Date().toTimeString().slice(0, 5);
 const probability = (value: number) => value.toFixed(2);
 
@@ -441,7 +435,7 @@ function validateRule(
   choices: EditableChoice[],
 ): { clean: ChoiceOption[]; problem: string | null } {
   if (!instructions.trim()) {
-    return { clean: [], problem: "Write a sorting prompt first." };
+    return { clean: [], problem: "Write a sorting prompt first, under Prompt and confidence gate." };
   }
   const clean = choices.map((choice) => ({
     label: choice.label.trim(),
@@ -754,21 +748,15 @@ export function PilahInbox() {
   }
 
   const activeRun = runs.find((run) => run.id === selectedRunId) ?? runs[0];
-  const subtitle = error
-    ? error
-    : activeRun
-      ? `Last prediction: ${activeRun.result.choice} (${probability(activeRun.result.top_probability)}) in ${Math.round(activeRun.latencyMs)} ms via ${activeRun.engine} (${activeRun.result.checkpoint}).`
-      : "Write your own prompt and choices, then sort any paragraph or up to 10 images, with a probability for each choice.";
+  // Laya needs a local GPU and is off on the hosted lab, so only the models that can answer are offered
+  const usableEngines = engines.filter((engineOption) => engineOption.available);
 
   return (
     <AppShell
       product="Dispatch"
       guide="dispatch"
       mark={<Mark size={20} />}
-      scope={{ line: "System 1 model", detail: "Custom prompt and choices" }}
-      nav={[
-        { label: "System 1 model", to: "/dispatch", icon: MODEL_ICON, count: runs.length || undefined, current: true },
-      ]}
+      nav={[]}
       sidebar={
         <>
           <fieldset className="side-group">
@@ -788,7 +776,7 @@ export function PilahInbox() {
           </fieldset>
           <fieldset className="side-group">
             <legend>Model</legend>
-            {engines.map((engineOption) => {
+            {usableEngines.map((engineOption) => {
               const textOnly = inputMode === "images" && !readsImages(engineOption.id);
               return (
                 <button
@@ -796,13 +784,12 @@ export function PilahInbox() {
                   type="button"
                   className="nav-item"
                   aria-pressed={selectedEngine === engineOption.id}
-                  disabled={!engineOption.available || textOnly}
+                  disabled={textOnly}
                   title={textOnly ? `${engineOption.name} reads text only` : engineOption.detail}
                   onClick={() => setSelectedEngine(engineOption.id)}
                 >
                   {engineOption.name}
-                  {!engineOption.available && <small>{engineOption.status_label}</small>}
-                  {engineOption.available && textOnly && <small>Text only</small>}
+                  {textOnly && <small>Text only</small>}
                 </button>
               );
             })}
@@ -811,19 +798,15 @@ export function PilahInbox() {
       }
     >
       <div className="title-row">
-        <div>
-          <h1>System 1 Model</h1>
-          <p className="sub">{subtitle}</p>
-        </div>
+        <h1>Sort messages and pictures into your own categories</h1>
       </div>
 
       <div className="pilah-workbench">
-        <section className="panel pilah-rule" aria-label="Sorting rule">
-          <header>
-            <h2>Rule and choices</h2>
-            {inputMode === "text" ? (
-              <label className="pilah-select-wrap">
-                <span>Preset</span>
+        <div className="pilah-left">
+          <section className="panel pilah-rule" aria-label="Sorting rule">
+            <header>
+              <h2>Categories</h2>
+              {inputMode === "text" ? (
                 <select
                   className="input pilah-select"
                   aria-label="Rule preset"
@@ -839,10 +822,7 @@ export function PilahInbox() {
                     </option>
                   ))}
                 </select>
-              </label>
-            ) : (
-              <label className="pilah-select-wrap">
-                <span>Preset</span>
+              ) : (
                 <select
                   className="input pilah-select"
                   aria-label="Rule preset"
@@ -858,105 +838,104 @@ export function PilahInbox() {
                     </option>
                   ))}
                 </select>
-              </label>
-            )}
-          </header>
+              )}
+            </header>
 
-          <div className="field">
-            <label htmlFor="pilah-instructions">Prompt</label>
-            <textarea
-              id="pilah-instructions"
-              className="pilah-textarea"
-              rows={3}
-              maxLength={2000}
-              value={instructions}
-              onChange={(event) => setInstructions(event.target.value)}
-              placeholder="State the rule for sorting each input paragraph"
-            />
-          </div>
+            <ul className="pilah-choices-list">
+              {choices.map((choice, index) => (
+                <li key={choice.key} className="pilah-choice-row">
+                  <input
+                    type="text"
+                    className="input pilah-choice-code"
+                    aria-label={`Choice ${index + 1} label`}
+                    placeholder="Label"
+                    maxLength={80}
+                    value={choice.label}
+                    onChange={(event) => updateChoice(choice.key, "label", event.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className="input pilah-choice-desc"
+                    aria-label={`Choice ${index + 1} description`}
+                    placeholder="What belongs here (optional)"
+                    maxLength={400}
+                    value={choice.description}
+                    onChange={(event) => updateChoice(choice.key, "description", event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="pilah-remove"
+                    disabled={choices.length <= 2}
+                    aria-label={`Remove choice ${choice.label || index + 1}`}
+                    title="Remove"
+                    onClick={() => removeChoice(choice.key)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
 
-          <div className="pilah-choices-head">
-            <span className="pilah-label">Choices ({choices.length} of 10)</span>
-            <button type="button" className="btn" disabled={choices.length >= 10} onClick={addChoice}>
-              Add choice
-            </button>
-          </div>
-
-          <ul className="pilah-choices-list">
-            {choices.map((choice, index) => (
-              <li key={choice.key} className="pilah-choice-row">
-                <input
-                  type="text"
-                  className="input pilah-choice-code"
-                  aria-label={`Choice ${index + 1} label`}
-                  placeholder="Label"
-                  maxLength={80}
-                  value={choice.label}
-                  onChange={(event) => updateChoice(choice.key, "label", event.target.value)}
-                />
-                <input
-                  type="text"
-                  className="input pilah-choice-desc"
-                  aria-label={`Choice ${index + 1} description`}
-                  placeholder="Optional criteria so the model knows what belongs here"
-                  maxLength={400}
-                  value={choice.description}
-                  onChange={(event) => updateChoice(choice.key, "description", event.target.value)}
-                />
-                <button
-                  type="button"
-                  className="btn ghost pilah-choice-remove"
-                  disabled={choices.length <= 2}
-                  aria-label={`Remove choice ${choice.label || index + 1}`}
-                  onClick={() => removeChoice(choice.key)}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          <div className="field pilah-gate-field">
-            <div className="pilah-gate-row">
-              <label htmlFor="pilah-gate">Confidence gate</label>
-              <strong className="num">{probability(confidenceGate)}</strong>
+            <div className="pilah-rule-foot">
+              <button type="button" className="btn ghost" disabled={choices.length >= 10} onClick={addChoice}>
+                + Add category
+              </button>
+              <details className="pilah-advanced">
+                <summary>Prompt and confidence gate</summary>
+                <div className="field">
+                  <label htmlFor="pilah-instructions">Prompt</label>
+                  <textarea
+                    id="pilah-instructions"
+                    className="pilah-textarea"
+                    rows={3}
+                    maxLength={2000}
+                    value={instructions}
+                    onChange={(event) => setInstructions(event.target.value)}
+                    placeholder="State the rule for sorting each input"
+                  />
+                </div>
+                <div className="field">
+                  <div className="pilah-gate-row">
+                    <label htmlFor="pilah-gate">Confidence gate</label>
+                    <strong className="num">{probability(confidenceGate)}</strong>
+                  </div>
+                  <input
+                    id="pilah-gate"
+                    type="range"
+                    min="0.40"
+                    max="0.95"
+                    step="0.05"
+                    value={confidenceGate}
+                    onChange={(event) => setConfidenceGate(Number(event.target.value))}
+                  />
+                  <span className="hint">
+                    Below {probability(confidenceGate)} means low confidence and needs a human judge.
+                  </span>
+                </div>
+              </details>
             </div>
-            <input
-              id="pilah-gate"
-              type="range"
-              min="0.40"
-              max="0.95"
-              step="0.05"
-              value={confidenceGate}
-              onChange={(event) => setConfidenceGate(Number(event.target.value))}
-            />
-            <span className="hint">
-              Below {probability(confidenceGate)} means low confidence and needs a human judge.
-            </span>
-          </div>
-        </section>
+          </section>
 
-        <div className="pilah-right">
           <form
             className="panel pilah-test"
             onSubmit={handleSubmit}
             aria-label={inputMode === "images" ? "Test images" : "Test paragraph"}
           >
             <header>
-              <h2>{inputMode === "images" ? `Test images (1 to ${MAX_BATCH})` : `Test texts (1 to ${MAX_BATCH})`}</h2>
+              <h2>{inputMode === "images" ? "Pictures to sort" : "Messages to sort"}</h2>
               {inputMode === "text" ? (
                 <div className="pilah-image-toolbar">
-                  <button type="button" className="btn" onClick={() => applyPreset(activePreset)}>
-                    Load {Math.min(activePreset.samples.length, MAX_BATCH)} samples
+                  <button type="button" className="btn ghost" onClick={() => applyPreset(activePreset)}>
+                    Reset examples
                   </button>
-                  <button type="button" className="btn" disabled={texts.length >= MAX_BATCH} onClick={addText}>
-                    Add text
+                  <button type="button" className="btn ghost" disabled={texts.length >= MAX_BATCH} onClick={addText}>
+                    + Add text
                   </button>
                 </div>
               ) : (
                 <div className="pilah-image-toolbar">
-                  <button type="button" className="btn" onClick={() => void handleLoadSampleImages()}>
-                    Load 3 sample images
+                  <button type="button" className="btn ghost" onClick={() => void handleLoadSampleImages()}>
+                    Load 3 examples
                   </button>
                   <label className="btn pilah-upload-label">
                     Choose images
@@ -982,7 +961,7 @@ export function PilahInbox() {
                       <textarea
                         className="pilah-textarea"
                         aria-label={`Text ${index + 1}`}
-                        rows={3}
+                        rows={2}
                         maxLength={4000}
                         placeholder="Write or paste a text in English or Indonesian..."
                         value={item.text}
@@ -991,31 +970,32 @@ export function PilahInbox() {
                           if (run) setSelectedRunId(run.id);
                         }}
                       />
-                      <div className="pilah-text-side">
-                        {run && (
+                      <button
+                        type="button"
+                        className="pilah-remove"
+                        disabled={texts.length <= 1}
+                        aria-label={`Remove text ${index + 1}`}
+                        title="Remove"
+                        onClick={() => removeText(item.id)}
+                      >
+                        ×
+                      </button>
+                      {run && (
+                        <div className="pilah-text-side">
                           <button type="button" className="pill-button" onClick={() => setSelectedRunId(run.id)}>
                             <span className={`pill ${run.result.passed_gate ? "pos" : "warn"}`}>
                               {run.result.choice} · {probability(run.result.top_probability)}
                             </span>
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="btn ghost"
-                          disabled={texts.length <= 1}
-                          aria-label={`Remove text ${index + 1}`}
-                          onClick={() => removeText(item.id)}
-                        >
-                          Remove
-                        </button>
-                      </div>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
               </ul>
             ) : queuedImages.length === 0 ? (
               <div className="pilah-image-empty">
-                <p>Upload 1 to {MAX_BATCH} images (JPEG or PNG) or load 3 sample images to classify into A, B, C...</p>
+                <p>Choose 1 to {MAX_BATCH} images (JPEG or PNG), or load 3 examples.</p>
               </div>
             ) : (
               <ul className="pilah-image-grid" aria-label="Queued images">
@@ -1070,7 +1050,7 @@ export function PilahInbox() {
                   {queuedImages.length > 0 && (
                     <button
                       type="button"
-                      className="btn"
+                      className="btn ghost"
                       disabled={sorting}
                       onClick={() => {
                         setQueuedImages([]);
@@ -1089,98 +1069,55 @@ export function PilahInbox() {
               )}
             </div>
             {selectedEngine === "gemini" && (
-              <p className="hint">
-                Note: Gemini runs on Google AI Studio's free tier (3-key rotation), so submitted inputs are sent to
-                Google.
-              </p>
+              <p className="hint">Gemini runs on Google AI Studio's free tier, so inputs are sent to Google.</p>
             )}
           </form>
+        </div>
 
-          <section className="well pilah-prediction" aria-label="Model prediction">
-            <div className="pilah-verdict-head">
-              <h3>Prediction</h3>
-              {activeRun && (
-                <span className={`pill ${activeRun.result.passed_gate ? "pos" : "warn"}`}>
-                  {activeRun.result.passed_gate ? "Clears gate" : "Needs human judge"}
-                </span>
-              )}
-            </div>
-
-            {activeRun ? (
-              <>
-                {activeRun.imagePreviewUrl ? (
-                  <div className="pilah-quote-image">
-                    <img src={activeRun.imagePreviewUrl} alt={activeRun.text} />
-                    <span>{activeRun.text}</span>
-                  </div>
-                ) : (
-                  <p className="pilah-quote">{activeRun.text}</p>
-                )}
-                <ul className="bars">
-                  {activeRun.choices.map((choice) => (
-                    <Bar
-                      key={choice.label}
-                      label={choice.label}
-                      description={choice.description}
-                      value={activeRun.result.probabilities[choice.label] ?? 0}
-                      chosen={choice.label === activeRun.result.choice}
-                      tickAt={choice.label === activeRun.result.choice ? activeRun.gate : null}
-                    />
-                  ))}
-                </ul>
-                <dl className="pilah-run-meta">
-                  <div>
-                    <dt>Engine</dt>
-                    <dd>{activeRun.engine}</dd>
-                  </div>
-                  <div>
-                    <dt>Checkpoint</dt>
-                    <dd>{activeRun.result.checkpoint}</dd>
-                  </div>
-                  <div>
-                    <dt>Gate</dt>
-                    <dd>{probability(activeRun.gate)}</dd>
-                  </div>
-                  <div>
-                    <dt>Latency</dt>
-                    <dd>{Math.round(activeRun.latencyMs)} ms</dd>
-                  </div>
-                </dl>
-              </>
-            ) : (
-              <span className="skeleton" style={{ height: 140 }} />
+        <section className="well pilah-prediction" aria-label="Model prediction">
+          <div className="pilah-verdict-head">
+            <h2>Result</h2>
+            {activeRun && (
+              <span className={`pill ${activeRun.result.passed_gate ? "pos" : "warn"}`}>
+                {activeRun.result.passed_gate ? "Confident" : "Needs a human"}
+              </span>
             )}
-          </section>
+          </div>
 
-          {runs.length > 0 && (
-            <section className="panel pilah-history" aria-label="Recent runs">
-              <header>
-                <h2>Session runs</h2>
-                <span className="meta">{runs.length} sorted</span>
-              </header>
-              <ul className="pilah-run-list">
-                {runs.slice(0, 6).map((run) => (
-                  <li key={run.id}>
-                    <button
-                      type="button"
-                      className="pilah-run-row"
-                      aria-current={activeRun?.id === run.id}
-                      onClick={() => setSelectedRunId(run.id)}
-                    >
-                      <span className="pilah-run-text">{run.text}</span>
-                      <span className="pilah-run-right">
-                        <span className={`pill ${run.result.passed_gate ? "pos" : "warn"}`}>
-                          {run.result.choice} · {probability(run.result.top_probability)}
-                        </span>
-                        <span className="pilah-run-time">{run.at}</span>
-                      </span>
-                    </button>
-                  </li>
+          {activeRun ? (
+            <>
+              {activeRun.imagePreviewUrl ? (
+                <div className="pilah-quote-image">
+                  <img src={activeRun.imagePreviewUrl} alt={activeRun.text} />
+                  <span>{activeRun.text}</span>
+                </div>
+              ) : (
+                <p className="pilah-quote">{activeRun.text}</p>
+              )}
+              <ul className="bars">
+                {activeRun.choices.map((choice) => (
+                  <Bar
+                    key={choice.label}
+                    label={choice.label}
+                    description={choice.description}
+                    value={activeRun.result.probabilities[choice.label] ?? 0}
+                    chosen={choice.label === activeRun.result.choice}
+                    tickAt={choice.label === activeRun.result.choice ? activeRun.gate : null}
+                  />
                 ))}
               </ul>
-            </section>
+              <p className="pilah-run-meta">
+                <span>{activeRun.result.checkpoint}</span>
+                <span>{Math.round(activeRun.latencyMs)} ms</span>
+                <span>gate {probability(activeRun.gate)}</span>
+              </p>
+            </>
+          ) : sorting ? (
+            <span className="skeleton" style={{ height: 140 }} />
+          ) : (
+            <p className="meta">Press Sort to see which category each item lands in.</p>
           )}
-        </div>
+        </section>
       </div>
     </AppShell>
   );

@@ -8,8 +8,8 @@ import "./lens.css";
 const EXAMPLES = ["selancar di ombak", "yellow sports car", "planet Mars", "menara tertinggi di dunia"];
 const ORIGINS: { value: OriginFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "upload", label: "My uploads" },
-  { value: "met", label: "Curated archive" },
+  { value: "met", label: "Archive" },
+  { value: "upload", label: "Visitor uploads" },
 ];
 const ROW_HEIGHT = 168;
 // Enough for the whole archive (239) and recent uploads in one listing
@@ -49,14 +49,13 @@ const GRID_ICON = (
   </svg>
 );
 
-/** The archive's subject is its first tag, uploads have none. */
-function bySubject(hits: SearchResult["hits"]): Map<string, SearchResult["hits"]> {
-  const groups = new Map<string, SearchResult["hits"]>();
-  for (const hit of hits) {
-    const subject = hit.photograph.origin === "upload" ? "Your uploads" : (hit.photograph.tags[0] ?? "Other");
-    groups.set(subject, [...(groups.get(subject) ?? []), hit]);
-  }
-  return groups;
+const UPLOADS = "Visitor uploads";
+
+/** The curated archive first, visitor uploads after it. No group headings: the page shows pictures, never labels. */
+function archiveFirst(result: SearchResult): SearchResult {
+  const archive = result.hits.filter((hit) => hit.photograph.origin !== "upload");
+  const uploads = result.hits.filter((hit) => hit.photograph.origin === "upload");
+  return { ...result, hits: [...archive, ...uploads] };
 }
 
 /** Pictures only: no title, date or tag is shown, because the search never reads them either. */
@@ -131,7 +130,7 @@ function Detail({
       <img src={imageUrl(photograph)} alt="" className="lens-detail-image" />
       {isUpload ? (
         <div className="lens-detail-actions">
-          <span className="pill pos">Your upload, stored in Typesense</span>
+          <span className="pill">Visitor upload</span>
           <button
             type="button"
             className="btn lens-delete-btn"
@@ -329,7 +328,7 @@ export function LensSearch() {
       setIngestOpen(false);
       setUpload(null);
       setIngestNote(
-        `Indexed ${result.added.length} ${result.added.length === 1 ? "picture" : "pictures"} into Typesense in ${Math.round(result.took_ms)} ms. Search for what they show.`,
+        `Added ${result.added.length} ${result.added.length === 1 ? "picture" : "pictures"} in ${Math.round(result.took_ms)} ms. Search for what they show.`,
       );
       await queryClient.invalidateQueries({ queryKey: ["lens"] });
       update({ view: "uploads", photo: result.added[0]?.id ?? null });
@@ -354,7 +353,7 @@ export function LensSearch() {
         return next;
       });
       update({ photo: null });
-      setIngestNote("Removed the picture from Typesense.");
+      setIngestNote("Removed the picture from the database.");
       await queryClient.invalidateQueries({ queryKey: ["lens"] });
     } catch (failure) {
       setIngestError(failure instanceof Error ? failure.message : "Could not remove the image.");
@@ -367,47 +366,19 @@ export function LensSearch() {
   const selected = selectedId ? known.get(selectedId) : undefined;
   const browsing = uploadsView && upload === null;
   const browsingAll = allView && upload === null;
-  const sub = offline
-    ? "Lens is not responding."
-    : search.isError
-      ? "The search failed. Try again."
-      : browsingAll
-        ? "Everything in the database, grouped by the archive's subjects. The subjects only help you pick words: search never reads them."
-        : "Found by what each picture shows. No title, caption or tag is read.";
-
-  const storeName = collection.data?.vector_store || "Typesense 27.1";
-  const scopeDetail = collection.data
-    ? `${collection.data.model} · ${collection.data.archive ?? collection.data.photographs} archive + ${collection.data.uploaded ?? 0} uploaded`
-    : "Gemini Embedding 2 · 768-dim";
+  const problem = offline ? "Lens is not responding." : search.isError ? "The search failed. Try again." : null;
   const emptyCopy = browsing
-    ? "No uploads yet. Click Add to database above to index your own pictures into Typesense."
+    ? "No uploads yet. Use Add pictures above to put your own in the database."
     : upload
       ? "No picture in the collection looks close enough to yours."
       : `Nothing in the collection is close enough to “${query}”. Try other words or a picture.`;
-  const pageTitle = upload
-    ? "Your picture"
-    : browsing
-      ? "Database uploads"
-      : browsingAll
-        ? "All pictures"
-        : `“${query}”`;
 
   return (
     <AppShell
       product="Lens"
       mark={<Mark size={20} />}
       guide="lens"
-      scope={{
-        line: `${storeName} · vector search`,
-        detail: scopeDetail,
-      }}
       nav={[
-        {
-          label: "Search",
-          to: query ? `/lens?q=${encodeURIComponent(query)}` : "/lens",
-          icon: SEARCH_ICON,
-          current: !uploadsView && !allView,
-        },
         {
           label: "All pictures",
           to: "/lens",
@@ -416,7 +387,7 @@ export function LensSearch() {
           current: allView,
         },
         {
-          label: "Database uploads",
+          label: UPLOADS,
           to: "/lens?view=uploads",
           icon: DATABASE_ICON,
           count: collection.data?.uploaded,
@@ -424,46 +395,24 @@ export function LensSearch() {
         },
       ]}
       className={selected ? "show-detail" : undefined}
-      topbar={
-        <form className="search" onSubmit={(event) => searchFor(draft, event)}>
-          {SEARCH_ICON}
-          <input
-            type="search"
-            placeholder="Describe any image in English or Indonesian"
-            aria-label="Describe a picture"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-          />
-        </form>
-      }
     >
-      <div className="title-row">
-        <div className="lens-title">
-          {uploadPreview && <img className="lens-query-picture" src={uploadPreview} alt="Your query" />}
-          <div>
-            <h1>{pageTitle}</h1>
-            <p className="sub">{sub}</p>
-          </div>
-        </div>
-        <div className="title-actions">
-          {search.data && <span className="stamp">{Math.round(search.data.took_ms)} ms</span>}
-          {upload && (
-            <button type="button" className="btn" onClick={() => setUpload(null)}>
-              Back to search
+      <div className="lens-hero">
+        <h1>Search pictures by what they show</h1>
+        <div className="lens-search-row">
+          <form className="lens-search" onSubmit={(event) => searchFor(draft, event)}>
+            {SEARCH_ICON}
+            <input
+              type="search"
+              placeholder="Describe a picture in English or Indonesian"
+              aria-label="Describe a picture"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+            <button type="submit" className="btn primary">
+              Search
             </button>
-          )}
-          <button
-            type="button"
-            className={`btn${ingestOpen ? " is-selected" : ""}`}
-            aria-expanded={ingestOpen}
-            onClick={() => {
-              setIngestOpen((previous) => !previous);
-              setIngestError(null);
-            }}
-          >
-            Add to database
-          </button>
-          <label className="btn primary lens-upload">
+          </form>
+          <label className="btn lens-upload">
             Search by picture
             <input
               type="file"
@@ -472,6 +421,25 @@ export function LensSearch() {
               onChange={(event) => takePicture(event.target.files?.[0])}
             />
           </label>
+          <button
+            type="button"
+            className={`btn ghost${ingestOpen ? " is-selected" : ""}`}
+            aria-expanded={ingestOpen}
+            onClick={() => {
+              setIngestOpen((previous) => !previous);
+              setIngestError(null);
+            }}
+          >
+            Add pictures
+          </button>
+        </div>
+        <div className="lens-examples">
+          <span>Try</span>
+          {EXAMPLES.map((example) => (
+            <button key={example} type="button" className="btn ghost" onClick={() => searchFor(example)}>
+              {example}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -488,10 +456,9 @@ export function LensSearch() {
         <form className="panel lens-ingest" onSubmit={submitIngest} aria-label="Add images to database">
           <header>
             <div>
-              <h2>Add images to Typesense</h2>
+              <h2>Add pictures to the database</h2>
               <p className="meta">
-                Only the pictures are stored: no title or tag, since search finds them by what they show. Pictures use
-                Google AI Studio's free tier, so uploads are sent to Google.
+                Only the picture is stored, with no title or tag. It is sent to Google to be embedded.
               </p>
             </div>
             <button type="button" className="btn ghost" onClick={() => setIngestOpen(false)}>
@@ -531,7 +498,7 @@ export function LensSearch() {
 
           <div className="lens-ingest-actions">
             <button type="submit" className="btn primary" disabled={ingesting}>
-              {ingesting ? "Embedding and indexing..." : "Save to Typesense"}
+              {ingesting ? "Adding..." : "Add to the database"}
             </button>
             {ingestError && (
               <span className="lens-ingest-error" role="alert">
@@ -542,29 +509,32 @@ export function LensSearch() {
         </form>
       )}
 
-      {!browsing && !browsingAll && (
-        <div className="filters lens-toolbar">
-          <fieldset className="segmented lens-origins">
-            <legend className="visually-hidden">Source filter</legend>
-            {ORIGINS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={origin === option.value}
-                onClick={() => update({ origin: option.value === "all" ? null : option.value, photo: null })}
-              >
-                {option.label}
+      {!browsingAll && (
+        <div className="lens-results-head">
+          <div className="lens-title">
+            {uploadPreview && <img className="lens-query-picture" src={uploadPreview} alt="Your query" />}
+            <h2>{upload ? "Pictures like yours" : browsing ? UPLOADS : `Results for “${query}”`}</h2>
+            {upload && (
+              <button type="button" className="btn ghost" onClick={() => setUpload(null)}>
+                Clear
               </button>
-            ))}
-          </fieldset>
-          <div className="lens-examples">
-            <span>Try</span>
-            {EXAMPLES.map((example) => (
-              <button key={example} type="button" className="btn ghost" onClick={() => searchFor(example)}>
-                {example}
-              </button>
-            ))}
+            )}
           </div>
+          {!browsing && (
+            <fieldset className="segmented lens-origins">
+              <legend className="visually-hidden">Source filter</legend>
+              {ORIGINS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={origin === option.value}
+                  onClick={() => update({ origin: option.value === "all" ? null : option.value, photo: null })}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </fieldset>
+          )}
         </div>
       )}
 
@@ -579,7 +549,9 @@ export function LensSearch() {
         onDrop={onDrop}
       >
         <section className="lens-results" aria-label="Results">
-          {search.isPending && !offline ? (
+          {problem ? (
+            <p className="empty">{problem}</p>
+          ) : search.isPending ? (
             <ul className="lens-gallery" aria-hidden="true">
               {Array.from({ length: 12 }, (_, index) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
@@ -589,26 +561,12 @@ export function LensSearch() {
               ))}
             </ul>
           ) : search.data && browsingAll ? (
-            [...bySubject(search.data.hits)].map(([subject, hits]) => (
-              <section key={subject} className="lens-subject" aria-label={subject}>
-                <header>
-                  <h2>
-                    {subject} <span className="meta">{hits.length}</span>
-                  </h2>
-                  {subject !== "Your uploads" && (
-                    <button type="button" className="btn ghost" onClick={() => searchFor(subject)}>
-                      Search “{subject}”
-                    </button>
-                  )}
-                </header>
-                <Gallery result={{ ...search.data, hits }} selected={selectedId} emptyCopy="" onSelect={select} />
-              </section>
-            ))
+            <div className="lens-all">
+              <Gallery result={archiveFirst(search.data)} selected={selectedId} emptyCopy="" onSelect={select} />
+            </div>
           ) : search.data ? (
             <Gallery result={search.data} selected={selectedId} emptyCopy={emptyCopy} onSelect={select} />
-          ) : (
-            <p className="empty">{sub}</p>
-          )}
+          ) : null}
         </section>
         {selected && (
           <Detail

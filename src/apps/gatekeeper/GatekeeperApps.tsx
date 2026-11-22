@@ -21,22 +21,23 @@ function QuestionCard({ id, question, cutoff }: { id: string; question: Question
     <article className="gate-question">
       <header>
         <h3>{QUESTION_TITLES[id] ?? id}</h3>
-        <span className="pill">
-          {question.type} · blocks at {cutoff == null ? NONE : cutoff.toFixed(2)}
-        </span>
+        <span className="pill">blocks at {cutoff == null ? NONE : cutoff.toFixed(2)}</span>
       </header>
       <p>{question.instructions}</p>
       {question.criteria && (
-        <dl>
-          <div>
-            <dt>Counts as yes</dt>
-            <dd>{question.criteria.true}</dd>
-          </div>
-          <div>
-            <dt>Counts as no</dt>
-            <dd>{question.criteria.false}</dd>
-          </div>
-        </dl>
+        <details className="gate-criteria">
+          <summary>What counts as yes and no</summary>
+          <dl>
+            <div>
+              <dt>Counts as yes</dt>
+              <dd>{question.criteria.true}</dd>
+            </div>
+            <div>
+              <dt>Counts as no</dt>
+              <dd>{question.criteria.false}</dd>
+            </div>
+          </dl>
+        </details>
       )}
     </article>
   );
@@ -100,17 +101,16 @@ function ScopePanel({ scope, cutoffs }: { scope: NamedScope; cutoffs: Record<str
         <h2 id={`scope-${scope.name}`}>
           Scope <code>{scope.name}</code>
         </h2>
-        <span className="meta">sent by the app as scope_name, kept here</span>
       </header>
       <blockquote className="gate-scope-text">{scope.scope}</blockquote>
-      <h3 className="gate-sub">What Jev is asked about every message, in one call</h3>
+      <h3 className="gate-sub">Latest messages checked</h3>
+      <RecentChecks name={scope.name} />
+      <h3 className="gate-sub">The two questions asked about every message, in one call</h3>
       <div className="gate-questions">
         {questions.map(([id, question]) => (
           <QuestionCard key={id} id={id} question={question} cutoff={cutoffs[id]} />
         ))}
       </div>
-      <h3 className="gate-sub">Latest messages checked with this scope</h3>
-      <RecentChecks name={scope.name} />
     </section>
   );
 }
@@ -131,19 +131,12 @@ export function GatekeeperApps() {
     off_topic: meta.data?.block_from_off_topic_probability,
   };
   return (
-    <AppShell
-      product="Gatekeeper"
-      mark={<Mark size={20} />}
-      guide="gatekeeper"
-      scope={{ line: "LLM gateway", detail: meta.data ? meta.data.engine : "Jev + Gemini Decision" }}
-      nav={gatekeeperNav("apps")}
-    >
+    <AppShell product="Gatekeeper" mark={<Mark size={20} />} guide="gatekeeper" nav={gatekeeperNav("apps")}>
       <div className="title-row">
         <div>
           <h1>Used by apps</h1>
           <p className="sub">
-            Tiketa's chat agent sends every visitor message here before its model reads it. A blocked message gets a
-            fixed refusal and never reaches a model. This is the exact text it is checked against.
+            Tiketa's chat assistant sends every visitor message here first. A blocked message never reaches a model.
           </p>
         </div>
       </div>
