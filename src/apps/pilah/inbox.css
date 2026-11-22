@@ -1,4 +1,4 @@
-/* Pilah configurable System 1 model screen, inside the shared app shell (shared/app-shell.css). */
+/* Dispatch: what goes in on the left (categories, then the items), the result on the right, inside the app shell. */
 
 .pilah-engines {
   margin: 0;
@@ -8,28 +8,74 @@
 
 .pilah-workbench {
   display: grid;
-  grid-template-columns: 5fr 7fr;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   gap: var(--gap);
   align-items: start;
 }
 
-.pilah-rule {
+.pilah-left {
   display: grid;
   gap: 16px;
+  min-width: 0;
+}
+
+.pilah-rule {
+  display: grid;
+  gap: 12px;
 }
 
 .pilah-rule > header,
-.pilah-test > header,
-.pilah-history > header {
+.pilah-test > header {
   margin-bottom: 0;
 }
 
-.pilah-select-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--fs-small);
+/* a quiet × that removes a category or a text */
+.pilah-remove {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
   color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.pilah-remove:hover {
+  background: var(--raised);
+  color: var(--text);
+}
+.pilah-remove:disabled {
+  visibility: hidden;
+}
+
+.pilah-rule-foot {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+.pilah-advanced {
+  width: 100%;
+}
+.pilah-advanced summary {
+  width: fit-content;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.pilah-advanced summary:hover {
+  color: var(--text);
+}
+.pilah-advanced[open] {
+  display: grid;
+  gap: 14px;
+  padding-top: 4px;
+}
+.pilah-advanced input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 .pilah-select {
@@ -56,17 +102,6 @@
   color: var(--faint);
 }
 
-.pilah-choices-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.pilah-label {
-  font-weight: 500;
-}
-
 .pilah-choices-list {
   display: grid;
   gap: 8px;
@@ -77,7 +112,7 @@
 
 .pilah-choice-row {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr) auto;
+  grid-template-columns: 128px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
 }
@@ -90,40 +125,11 @@
   min-width: 0;
 }
 
-.pilah-choice-remove {
-  color: var(--muted);
-  height: 38px;
-  padding: 0 8px;
-}
-
-.pilah-choice-remove:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.pilah-gate-field {
-  padding-top: 8px;
-  border-top: 1px solid var(--rule);
-}
-
 .pilah-gate-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-}
-
-.pilah-gate-field input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-/* ---------- right column: test form, calibrated bars, and session runs ---------- */
-.pilah-right {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
 }
 
 .pilah-test {
@@ -155,13 +161,15 @@
   overflow-y: auto;
   list-style: none;
 }
-/* Each text takes the panel's full width and grows with what is typed; its answer sits under it */
+/* Each text takes the panel's full width with its × beside it, and grows with what is typed; its answer sits under it */
 .pilah-text-list li {
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px 4px;
 }
 .pilah-text-list .pilah-textarea {
-  min-height: calc(3lh + 22px);
+  min-height: calc(2lh + 22px);
   max-height: calc(9lh + 22px);
   field-sizing: content;
 }
@@ -169,14 +177,7 @@
   border-color: var(--accent);
 }
 .pilah-text-side {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 28px;
-}
-.pilah-text-side > .btn:only-child {
-  margin-left: auto;
+  grid-column: 1;
 }
 .pill-button {
   padding: 0;
@@ -282,8 +283,10 @@
   font-size: var(--fs-small);
 }
 
-/* ---------- calibrated probability bars ---------- */
+/* ---------- the result: one bar per category, sticky beside the inputs ---------- */
 .well.pilah-prediction {
+  position: sticky;
+  top: 0;
   display: grid;
   gap: 16px;
   padding: var(--card-pad);
@@ -299,7 +302,7 @@
   gap: 12px;
 }
 
-.pilah-verdict-head h3 {
+.pilah-verdict-head h2 {
   font-size: var(--fs-section);
   line-height: 1.3;
   font-weight: 600;
@@ -389,99 +392,23 @@
 }
 
 .pilah-run-meta {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
   padding-top: 12px;
   border-top: 1px solid var(--border);
-}
-
-.pilah-run-meta div {
-  display: grid;
-  gap: 2px;
-}
-
-.pilah-run-meta dt {
-  font-size: var(--fs-small);
   color: var(--muted);
-}
-
-.pilah-run-meta dd {
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- session history ---------- */
-.pilah-history {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.pilah-run-list {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  min-width: 0;
-}
-
-.pilah-run-list li {
-  min-width: 0;
-}
-
-.pilah-run-list li + li {
-  border-top: 1px solid var(--rule);
-}
-
-.pilah-run-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 8px 10px;
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.pilah-run-row:hover {
-  background: var(--raised);
-}
-
-.pilah-run-row[aria-current="true"] {
-  background: var(--active);
-}
-
-.pilah-run-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pilah-run-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: none;
-}
-
-.pilah-run-time {
   font-size: var(--fs-small);
-  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 1100px) {
   .pilah-workbench {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .well.pilah-prediction {
+    position: static;
   }
 }
 
@@ -491,18 +418,6 @@
     flex-wrap: wrap;
   }
   .pilah-choice-row {
-    grid-template-columns: 92px minmax(0, 1fr);
-  }
-  .pilah-choice-remove {
-    grid-column: 1 / -1;
-    justify-self: end;
-    height: 30px;
-  }
-  .pilah-run-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .pilah-run-row {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 96px minmax(0, 1fr) auto;
   }
 }
